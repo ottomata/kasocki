@@ -305,7 +305,7 @@ class Kasocki {
 
 
     /**
-     * While this.running, calls consumeAndEmit() in a loop.
+     * While this.running, calls on_consume() in a loop.
      */
     _loop() {
         if (!this.running) {
