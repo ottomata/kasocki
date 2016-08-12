@@ -1,16 +1,17 @@
 'use strict';
 
 /**
- * Test Kasocki socket.io server.
+ * Kasocki socket.io test server.
  * Connect to this with a client on port 6927.
  * Kafka broker must be running at localhost:9092.
  */
 
-
 var server = require('http').createServer();
 var io = require('socket.io')(server);
 
-io.on('connection', function(socket){
+io.on('connection', (socket) => {
+    // Bind Kasocki to this io instance.
+    // You could alternatively pass a socket.io namespace.
     const Kasocki = require('./index')(io);
     console.log(socket.id + ' connected');
 

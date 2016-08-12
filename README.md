@@ -1,9 +1,18 @@
-# Kasocki!
+# Kasocki
 
+Kafka Consumer -> socket.io library.  All messages in Kafka are assumed to be
+utf-8 JSON strings.  These are decoded and augmented, and then emitted
+to connected socket.io clients.
+
+Supports wildcard topic subscription and arbitrary server side field filtering.
+
+Future features will include subscribing at a partition offsets, and
+eventually timestamp based subscriptions.
 
 ## TODO
 
-- websocket tests?
+- Use Blizzard/node-rdkafka instead of Wikimedia?
+- websocket tests, integration tests.
 - return topic, partition offset outside of event/message?
 - figure out proper logging
 - figure out error responses
@@ -14,8 +23,7 @@
   node-rdkafka doesn't have assign() yet, and timestamp based consumption
   is not even present yet.
 
-- move objectutils.js stuff elsewhere?
-- move Kasocki class into its own file and require it from index.js?
+- move lib/objectutils.js stuff elsewhere?
 
 -  fix:
 ```

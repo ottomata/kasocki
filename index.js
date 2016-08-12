@@ -1,41 +1,25 @@
 'use strict';
 
-const objectutils = require('./objectutils');
+/**
+ * This module needs to be required with a socket.io io or namespace
+ * object. The io object will then be configured to use
+ * socket.io-as-promised.
+ *
+ * Usage:
+ * io.on('connection', (socket) => {
+ *     // Bind Kasocki to this io instance.
+ *     // You could alternatively pass a socket.io namespace.
+ *     const Kasocki = require('kasocki')(io);
+ *
+ *     let kasocki = new Kasocki(socket, kafka_config, bunyan_logger);
+ * });
+ */
 
-const kafka = require('rdkafka');
+
+const objectutils      = require('./lib/objectutils');
+const kafka            = require('rdkafka');
 const socketAsPromised = require('socket.io-as-promised');
-const serializerr = require('serializerr');
-
-//  TODO: state machine for states and flow.
-//  subscribe -> start -> pause -> stop, etc.
-
-
-function __debugKafkaMessage(msg) {
-    var util = require("util");
-    msg.payloadString = msg.payload.toString();
-    console.log(util.inspect(msg, false, null));
-}
-
-
-//  TODO: Should this wrap the message.payload json object?
-//  Should it place the topic, partition, offset field
-//  into message?
-function buildEvent(kafkaMessage) {
-    try {
-        let event = objectutils.factory(kafkaMessage.payload);
-        // TODO: rename this?
-        event._kafka = {
-            'topic': kafkaMessage.topicName,
-            'partition': kafkaMessage.partition,
-            'offset': kafkaMessage.offset,
-            'key': kafkaMessage.key
-        }
-        return event;
-    } catch (e) {
-        console.log('Failed to decode: %o, %o', message.payload.toString(), e);
-        return undefined;
-    }
-}
+const serializerr      = require('serializerr');
 
 
 /**
@@ -370,6 +354,26 @@ class Kasocki {
         return Promise.reject(err);
     }
 
+}
+
+//  TODO: Should this wrap the message.payload json object?
+//  Should it place the topic, partition, offset field
+//  into message?
+function buildEvent(kafkaMessage) {
+    try {
+        let event = objectutils.factory(kafkaMessage.payload);
+        // TODO: rename this?
+        event._kafka = {
+            'topic': kafkaMessage.topicName,
+            'partition': kafkaMessage.partition,
+            'offset': kafkaMessage.offset,
+            'key': kafkaMessage.key
+        }
+        return event;
+    } catch (e) {
+        console.log('Failed to decode: %o, %o', message.payload.toString(), e);
+        return undefined;
+    }
 }
 
 /**
