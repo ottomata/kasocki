@@ -79,7 +79,7 @@ socket.disconnect();
 
 ## TODO
 
-- Use Blizzard/node-rdkafka instead of Wikimedia?
+- Use blizzard's flowing consumer for start() interface
 - websocket tests, integration tests.
 - return topic, partition offset outside of event/message?
 - figure out proper logging

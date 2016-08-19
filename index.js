@@ -14,9 +14,9 @@
 
 
 const objectutils      = require('./lib/objectutils');
-const kafka            = require('rdkafka');
+const kafka            = require('node-rdkafka');
 const serializerr      = require('serializerr');
-
+const P = require('bluebird');
 
 /**
  * Represents a Kafka Consumer -> socket.io connection.
@@ -81,7 +81,6 @@ class Kasocki {
         // TODO: tune these.
         const defaultKafkaConfig = {
             'metadata.broker.list': 'localhost:9092',
-            // 'default_topic_conf': { 'auto.offset.reset': 'earliest' }
         }
 
         // These configs MUST be set for a Kasocki KafkaConsumer.
@@ -107,13 +106,45 @@ class Kasocki {
         // Merge mandatory over provided configs.
         kafkaConfig = Object.assign(kafkaConfig, mandatoryKafkaConfig);
 
-        // Create our kafka consumer instance.
-        this.kafkaConsumer = new kafka.KafkaConsumer(kafkaConfig);
+        // TODO: accept topicConfig
+        const topicConfig = {};
+
+        // Create our kafka consumer instance.  This will
+        // set this.kafkaConsumer once it has connected.
+        this.createKafkaConsumer(kafkaConfig, topicConfig)
 
         // Register methods that start with on_ as socket event handlers.
-        this._registerHandlers();
+        .then(this._registerHandlers.bind(this))
+
+        // KafkaConsumer has connected, and handlers are registered,
+        // tell the client we are ready.
+        .then(() => {
+            this.socket.emit('ready');
+        })
+
+        // If anything bad during initialization, disconnect now.
+        .catch((e) => {
+            this.log('error', `Failed Kasocki initialization: ${e.toString()}`);
+            this.on_disconnect();
+        });
     }
 
+    /**
+     * Creates a new promisified and connected this.kafkaConsumer.
+     * Returns a Promise that when resolved will have set
+     * this.kafkaConsumer to a connected promisified kafka.KafkaConsumer
+     * instance.
+     */
+    createKafkaConsumer(kafkaConfig, topicConfig) {
+        const consumer = P.promisifyAll(
+            new kafka.KafkaConsumer(kafkaConfig, topicConfig)
+        );
+        return consumer.connectAsync(undefined)
+        .then((metadata) => {
+            // TODO debug log metadata?
+            this.kafkaConsumer = consumer;
+        })
+    }
 
     /**
      * Returns all method names that start with 'on_'.
@@ -225,10 +256,12 @@ class Kasocki {
      * @param {Array} topics
      */
     on_subscribe(topics) {
-        // throw new Error('woo');
         if (this.closing) {
-            throw new Error('Cannot subscribe, already closing');
+            this.log('warn', 'Cannot subscribe, already closing.');
+            return;
         }
+
+        this.kafkaConsumer.unsubscribe();
         this.log('info', 'Subscribing to topics.', {'topics': topics})
         this.kafkaConsumer.subscribe(topics);
     }
@@ -315,7 +348,7 @@ class Kasocki {
         this.closing = true;
 
         if ('kafkaConsumer' in this) {
-            this.kafkaConsumer.close();
+            this.kafkaConsumer.disconnect();
             delete this.kafkaConsumer;
         }
 
@@ -332,11 +365,14 @@ class Kasocki {
      * the first message from Kafka.
      */
     on_consume() {
-        // Consume a message from Kafka
-        return this.kafkaConsumer.consume()
-        // Then convert it to an object and emit it to the socket
-        .then((kafkaMessage) => {
+        if (this.closing) {
+            this.log('warn', 'Cannot consume, already closing.');
+            return;
+        }
 
+        // Consume a message from Kafka
+        return this.kafkaConsumer.consumeAsync()
+        .then((kafkaMessage) => {
             // TODO build message async?
             // TODO: if this throws an error, we will end up returning
             // that error to the client's emit cb.  Should we always do this?
@@ -351,12 +387,27 @@ class Kasocki {
             else {
                 return this.on_consume();
             }
+        })
+        .catch((e) => {
+            // If this looks like a node-rdkafka error
+            if ('origin' in e && e.origin === 'kafka') {
+                // Keep attempting to consume until we find a real message.
+                switch (e.code) {
+                    case kafka.CODES.ERRORS.ERR__PARTITION_EOF:
+                    case kafka.CODES.ERRORS.ERR__TIMED_OUT:
+                        this.log('debug', `Encountered innoculous Kafka error: ${e.message} (${e.code}), continuing`);
+                        // Call on_consume again until we get an actual message;
+                        return this.on_consume();
+                }
+            }
+            // If we get here, we got a real error, bubble it up!
+            throw e;
         });
     }
 
 
     /**
-     * While this.running, calls on_consume() and then emit 'message'in a loop.
+     * While this.running, calls on_consume() and then emits 'message' in a loop.
      */
     _loop() {
         if (!this.running) {
@@ -413,10 +464,10 @@ class Kasocki {
     //  into message?
     static _buildMessage(kafkaMessage) {
         try {
-            let message = objectutils.factory(kafkaMessage.payload);
+            let message = objectutils.factory(kafkaMessage.message);
             // TODO: rename this?
             message._kafka = {
-                'topic': kafkaMessage.topicName,
+                'topic': kafkaMessage.topic,
                 'partition': kafkaMessage.partition,
                 'offset': kafkaMessage.offset,
                 'key': kafkaMessage.key
@@ -424,7 +475,7 @@ class Kasocki {
             return message;
         }
         catch (e) {
-            throw new Error(`Failed building message from Kafka: '${kafkaMessage.payload.toString()}' ${e}`);
+            throw new Error(`Failed building message from Kafka: '${kafkaMessage.message.toString()}' ${e}`);
         }
     }
 

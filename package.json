@@ -25,7 +25,7 @@
       "bunyan": "^1.8.1",
       "socket.io": "^1.4.8",
       "serializerr": "^1.0.3",
-      "rdkafka": "wikimedia/node-rdkafka"
+      "node-rdkafka": "Blizzard/node-rdkafka"
   },
   "devDependencies": {
     "istanbul": "^0.4.4",
