@@ -34,13 +34,11 @@ socket.on('message', function(data){
 
 socket.on('disconnect', function(data){
     process.stdout.write("CLOSED.\n");
-    // throw new Error('CLOOOSED STOP IT!');
 });
 
 
 socket.on('ready', function(data){
     process.stdout.write("SO READY TO GO.\n");
-
 
     console.log("calling " + process.argv[4]);
     tests[process.argv[4]]();
@@ -56,35 +54,6 @@ function emit(event, arg) {
         socket.emit(event, arg, logErr.bind(null, event));
     }
 }
-
-// function emit('consume') {
-//     console.log('consumeOne');
-//     socket.emit('consume', null, logErr.bind(null, 'consume'));
-// }
-//
-// function start() {
-//     console.log('start');
-//     socket.emit('start', null, logErr);
-// }
-//
-// function pause() {
-//     console.log('pause');
-//     socket.emit('pause', null, logErr);
-// }
-// function emit('subscribe', topics) {
-//     console.log('subscribe to ', topics);
-//     socket.emit('subscribe', topics, logErr);
-// }
-//
-// function filter(filters) {
-//     console.log('filtering %s', filters);
-//     socket.emit('filter', filters, logErr);
-// }
-//
-// function disconnect() {
-//     console.log('close');
-//     socket.disconnect();
-// }
 
 
 var tests = {
