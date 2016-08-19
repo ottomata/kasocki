@@ -92,12 +92,3 @@ socket.disconnect();
   is not even present yet.
 
 - move lib/objectutils.js stuff elsewhere?
-
--  fix:
-```
-  node_modules/socket.io-as-promised/node_modules/ascallback/index.js:4
-  let p = promise.then(function (ret) {
-  ^^^
-
-SyntaxError: Block-scoped declarations (let, const, function, class) not yet supported outside strict mode
-```
