@@ -4,7 +4,7 @@
   "description": "Kafka -> socket.io",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha"
   },
   "repository": {
     "type": "git",
@@ -24,8 +24,15 @@
   "dependencies": {
       "bunyan": "^1.8.1",
       "socket.io": "^1.4.8",
-      "socket.io-as-promised": "^1.0.0",
       "serializerr": "^1.0.3",
       "rdkafka": "wikimedia/node-rdkafka"
+  },
+  "devDependencies": {
+    "istanbul": "^0.4.4",
+    "mocha": "^2.5.3",
+    "mocha-jshint": "^2.3.1",
+    "mocha-lcov-reporter": "^1.2.0",
+    "nsp": "^2.6.1",
+    "socket.io-client": "^1.4.8"
   }
 }
