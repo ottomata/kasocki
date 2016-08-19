@@ -14,14 +14,11 @@ eventually timestamp based subscriptions.
 
 Server:
 ```javascript
-var server = require('http').createServer();
-var io = require('socket.io')(server);
+const server = require('http').createServer();
+const io = require('socket.io')(server);
+const Kasocki = require('kasocki');
 
 io.on('connection', (socket) => {
-    // Bind Kasocki to this io instance.
-    // You could alternatively pass a socket.io namespace.
-    const Kasocki = require('kasocki')(io);
-
     // Create a new Kasocki instance bound to the socket.
     // The socket client can then subscribe to topics,
     // specify filters, and start consuming.

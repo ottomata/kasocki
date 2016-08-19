@@ -385,25 +385,27 @@ class Kasocki {
 
 
     /**
+     * Logs error and returns a serialized error object suitable
+     * for sending back to connected socket.io client.
      */
-    _error(err, extra) {
+    _error(error, extra) {
 
-        if (!(err instanceof Error)) {
-            err = new Error(err);
+        if (!(error instanceof Error)) {
+            error = new Error(error);
         }
-        this.log('error', err.message);
+        this.log('error', error.message);
 
-        err.socket = this.name;
+        error.socket = this.name;
 
         if (extra) {
-            err = Object.assign(err, extra);
+            error = Object.assign(error, extra);
         }
 
         // should we remove the stack we serialize to send to the client?
         // delete err.stack;
         // TODO: Should we close the socket on errors?
         // this.close();
-        return serializerr(err);
+        return serializerr(error);
     }
 
     //  TODO: Should this wrap the message.payload json object?
