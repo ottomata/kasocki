@@ -80,6 +80,9 @@ socket.disconnect();
 ## TODO
 
 - Use blizzard's flowing consumer for start() interface
+-- Figure out how to do both single consume and flowing.  Might be difficult, not sure.
+-- cannot unsubscribe or stop consumer once it is started.  Hm.
+
 - websocket tests, integration tests.
 - return topic, partition offset outside of event/message?
 - figure out proper logging

@@ -31,6 +31,10 @@ socket.on('message', function(data){
     process.stdout.write(JSON.stringify(data) + "\n");
 });
 
+socket.on('error', function(data){
+    process.stderr.write('ERROR', JSON.stringify(data) + "\n");
+});
+
 
 socket.on('disconnect', function(data){
     process.stdout.write("CLOSED.\n");
@@ -44,6 +48,7 @@ socket.on('ready', function(data){
     tests[process.argv[4]]();
 });
 
+var topics = ['test4'];
 
 function emit(event, arg) {
     console.log(event, arg);
@@ -58,7 +63,7 @@ function emit(event, arg) {
 
 var tests = {
     simple: function() {
-        emit('subscribe', ['test']);
+        emit('subscribe', topics);
         emit('start');
         BBPromise.delay(5000).then(emit.bind(null, 'pause'))
         .delay(5000).then(emit.bind(null, 'start'))
@@ -66,7 +71,7 @@ var tests = {
     },
 
     runThrough: function() {
-        emit('subscribe', ['test']);
+        emit('subscribe', topics);
         emit('start');
 
         BBPromise.delay(5000).then(emit.bind(null, 'pause'))
@@ -86,7 +91,7 @@ var tests = {
     },
 
     closeThenSubscribe: function() {
-        emit('subscribe', ['test']);
+        emit('subscribe', topics);
         emit('start');
         BBPromise.delay(3000).then(emit.bind(null, 'disconnect'))
         .then(emit.bind(null, 'subscribe', ['^test.*']));
@@ -133,7 +138,7 @@ var tests = {
     },
 
     justSubscribe: function() {
-        emit('subscribe', ['test']);
+        emit('subscribe', topics);
         BBPromise.delay(2000).then(emit.bind(null, 'disconnect'));
     },
 
@@ -143,13 +148,13 @@ var tests = {
     },
 
     consumeIt: function() {
-        emit('subscribe', ['test']);
+        emit('subscribe', topics);
         BBPromise.delay(1000).then(emit.bind(null, 'consume'))
         .delay(5000).then(emit.bind(null, 'disconnect'));
     },
 
     consumeFew: function() {
-        emit('subscribe', ['test']);
+        emit('subscribe', topics);
         BBPromise.delay(1000).then(emit.bind(null, 'consume'))
         .then(emit.bind(null, 'consume'))
         .then(emit.bind(null, 'consume'))
@@ -167,9 +172,26 @@ var tests = {
         BBPromise.delay(2000).then(emit.bind(null, 'disconnect'));
     },
 
+    startFlow: function() {
+        emit('start', ['test4']);
+        BBPromise.delay(5000).then(emit.bind(null, 'disconnect'));
+    },
+
+    startFlowUnsubscribe: function() {
+        emit('start', ['test4']);
+        BBPromise.delay(5000).then(emit.bind(null, 'unsubscribe'))
+        .delay(5000).then(emit.bind(null, 'disconnect'));
+    },
+
+    startFlowRestart: function() {
+        emit('start', ['test4']);
+        BBPromise.delay(5000).then(emit.bind(null, 'start', ['test2']))
+        .delay(5000).then(emit.bind(null, 'disconnect'));
+    },
+
     startSubscribeStart: function() {
         emit('start');
-        BBPromise.delay(2000).then(emit.bind(null, 'subscribe', ['test']))
+        BBPromise.delay(2000).then(emit.bind(null, 'subscribe', topics))
         .delay(2000).then(emit.bind(null, 'start'))
         .delay(2000).then(emit.bind(null, 'disconnect'));
     },

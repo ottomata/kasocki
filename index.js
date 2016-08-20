@@ -50,12 +50,13 @@ class Kasocki {
         kafkaConfig,
         logger
     ) {
-        this.socket  = socket;
-        this.name    = this.socket.id
-        this.filters = null;
+        this.socket     = socket;
+        this.name       = this.socket.id
+        this.filters    = null;
 
-        this.running = false;
-        this.closing = false;
+        this.running    = false;
+        this.closing    = false;
+        this.subscribed = false;
 
         // If we are given a logger, assume it is a bunyan logger
         // and create a child.
@@ -107,11 +108,59 @@ class Kasocki {
         kafkaConfig = Object.assign(kafkaConfig, mandatoryKafkaConfig);
 
         // TODO: accept topicConfig
-        const topicConfig = {};
+        const topicConfig = {'auto.offset.reset': 'earliest'};
+
+       // // EHHH?
+       //  var consumer = new kafka.KafkaConsumer({
+       //      'group.id':  new Date().getTime().toString(), // force a new consumer group
+       //      'metadata.broker.list': 'localhost:9092',
+       //      'enable.auto.commit': false,
+       //  }, {'auto.offset.reset': 'earliest'});
+       //
+       //
+       //  consumer.connect(undefined, () => {
+       //      console.log('S start with topics ', ['test4']);
+       //
+       //      consumer.consume(['test4'], (err, kafkaMessage) => {
+       //          console.log('callback');
+       //          if (err) {
+       //              console.log(err);
+       //              this.socket.emit('error', serializerr(err));
+       //          }
+       //          else if (kafkaMessage) {
+       //              console.log('GOT', kafkaMessage.message.toString());
+       //              // TODO build message async?
+       //              // TODO: if this throws an error, we will end up returning
+       //              // that error to the client's emit cb.  Should we always do this?
+       //              const message = this.constructor._buildMessage(kafkaMessage);
+       //
+       //              // If we got a message and it matches filters,
+       //              // then return it now.
+       //              if (message && this._match(message)) {
+       //                  this.socket.emit('message', message);
+       //              }
+       //          }
+       //      });
+       //  });
+       //  return;
 
         // Create our kafka consumer instance.  This will
         // set this.kafkaConsumer once it has connected.
         this.createKafkaConsumer(kafkaConfig, topicConfig)
+
+
+
+       // .then(() => {
+       //     this.kafkaConsumer.on('data', (kafkaMessage) => {
+       //         console.log('CB');
+       //         if (kafkaMessage) {
+       //             console.log('GOT', kafkaMessage.message.toString());
+       //             this.socket.emit('message', kafkaMessage.message.toString());
+       //         }
+       //     });
+       //     return this.kafkaConsumer.consume(['test4'])
+       // })
+
 
         // Register methods that start with on_ as socket event handlers.
         .then(this._registerHandlers.bind(this))
@@ -264,6 +313,7 @@ class Kasocki {
         this.kafkaConsumer.unsubscribe();
         this.log('info', 'Subscribing to topics.', {'topics': topics})
         this.kafkaConsumer.subscribe(topics);
+        this.subscribed = true;
     }
 
 
@@ -307,23 +357,68 @@ class Kasocki {
     }
 
 
+    // DOES NOT WORK
+    on_unsubscribe() {
+        this.log('info', 'Unsubscribing');
+        this.kafkaConsumer.unsubscribe();
+        this.subscribed = false;
+    }
+
+
+    // TODO : use this for both flowing and non flowing
+    _consumeCallback(kafkaMessage) {
+        // TODO build message async?
+        // TODO: if this throws an error, we will end up returning
+        // that error to the client's emit cb.  Should we always do this?
+        const message = this.constructor._buildMessage(kafkaMessage);
+
+        // If we got a message and it matches filters,
+        // then return it now.
+        if (message && this._match(message)) {
+            this.socket.emit('message', message);
+        }
+    }
     /**
      * Starts the consume loop.
      */
-    on_start() {
+    on_start(topics) {
         // Already running
-        if (this.running) {
-            throw new Error('Cannot start, already started.');
-        }
-        else if (this.closing) {
+        // if (this.running) {
+        //     throw new Error('Cannot start, already started.');
+        // }
+        // else
+
+        if (this.closing) {
             throw new Error('Cannot start, already closing.');
         }
+
+        if (this.subscribed) {
+            this.log('info',
+                'Already subscribed while trying to start. ' +
+                'Unsubscribing previously subscribed topics.'
+            )
+            this.kafkaConsumer.unsubscribe();
+            this.subscribed = false;
+        }
+
         else {
             this.running = true;
 
             // Loop until not this.running or until error.
-            this.log('info', 'Starting');
-            return this._loop();
+            this.log('info', `Starting consume from ${topics}`);
+            // TODO this state seems flaky.
+            this.subscribed = true;
+
+            // Register an on 'data' handler for this kafkaConsumer.
+            // The promisified kafkaConsumer.consumeAsync() method
+            // doesn't work in flowing mode, since it expects the
+            // then callback to be resolved after the first
+            // time it is called.
+            this.kafkaConsumer.on('data', this._consumeCallback.bind(this));
+            // Call consume (TODO: is this the same as consumeAsync???).
+            // With the topics parameter, this will start consumption
+            // in flowing mode.
+            return this.kafkaConsumer.consume(topics);
         }
     }
 
@@ -404,6 +499,10 @@ class Kasocki {
             throw e;
         });
     }
+
+    // _consumeCallback(kafkaMessage) {
+    //
+    // }
 
 
     /**
