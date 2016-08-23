@@ -3,7 +3,7 @@
 
 const http =  require('http');
 const socket_io = require('socket.io');
-const Kasocki = require('./index');
+const Kasocki = require('./lib/Kasocki');
 
 /**
  * Kasocki socket.io test server.

@@ -2,7 +2,7 @@
   "name": "kasocki",
   "version": "0.0.1",
   "description": "Kafka -> socket.io",
-  "main": "index.js",
+  "main": "lib/Kasocki.js",
   "scripts": {
     "test": "mocha"
   },
