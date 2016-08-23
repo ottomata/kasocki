@@ -79,15 +79,12 @@ socket.disconnect();
 
 ## TODO
 
-- use generic config properties as Kasocki constructor arg
 - websocket tests, integration tests.
-- return topic, partition offset outside of event/message?
+- return _kafka topic, partition offset outside of event/message?
 - figure out kafka group non assigment
 - docker with kafka
 - rdkafka statsd
 - logstash?
-
-- move lib/objectutils.js stuff elsewhere?
 
 
 ## Blizzard Consume Modes
