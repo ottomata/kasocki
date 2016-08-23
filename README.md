@@ -92,3 +92,23 @@ socket.disconnect();
   is not even present yet.
 
 - move lib/objectutils.js stuff elsewhere?
+
+
+## Blizzard Consume Modes
+The Blizzard Kafka client that Kasocki uses has several consume APIs.
+Kasocki uses the Standard Non flowing API, and socket.io clients
+can choose to receive messages either via the consume socket event
+ackCallback, or by emitting a start event, and listening for on 'message'
+events to be sent by Kasocki.
+
+Quick testing of each mode:
+- Non flowing with ackCb to socket io:     800/s
+- Non flowing with on.data emit message:  6000/s  (this is enough for our use case)
+- flowing mode with on.data emit: didn't work with lots of messages, but
+  perhaps I was doing it wrong.
+
+```
+RangeError: Maximum call stack size exceeded
+/home/otto/kasocki/node_modules/socket.io/node_modules/engine.io/lib/socket.js:413
+      this.sentCallbackFn.push.apply(this.sentCallbackFn, this.packetsFn);
+```
