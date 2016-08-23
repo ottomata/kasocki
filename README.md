@@ -79,11 +79,9 @@ socket.disconnect();
 
 ## TODO
 
-- Use blizzard's flowing consumer for start() interface
+- use generic config properties as Kasocki constructor arg
 - websocket tests, integration tests.
 - return topic, partition offset outside of event/message?
-- figure out proper logging
-- figure out error responses
 - figure out kafka group non assigment
 - docker with kafka
 

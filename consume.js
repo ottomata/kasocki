@@ -174,4 +174,46 @@ var tests = {
         .delay(2000).then(emit.bind(null, 'disconnect'));
     },
 
+    subscribeAllowed: function() {
+        emit('subscribe', ['test']);
+        emit('subscribe', ['test', 'test4']);
+    },
+
+    subscribeNotAllowed: function() {
+        emit('subscribe', ['test', 'nopeee']);
+    },
+
+    assignAllowed: function() {
+        emit('subscribe', [{'topic': 'test4', 'partition': 0, 'offset': 33326 }]);
+    },
+
+    assignNotAllowed: function() {
+        emit('subscribe', [{'topic': 'nopers', 'partition': 0, 'offset': 33326 }]);
+    },
+
+    assign: function() {
+        var assignments = [{'topic': 'test4', 'partition': 0, 'offset': 33326 }];
+
+        emit('subscribe',assignments);
+        emit('start');
+    },
+
+    assignEarliest: function() {
+        emit('subscribe', [{'topic': 'test4', 'partition': 0, offset: 'earliest'}]);
+        emit('start');
+    },
+
+    assignNoOffset: function() {
+        emit('subscribe', [{'topic': 'test4', 'partition': 0}]);
+        emit('start');
+    },
+
+    assignMulti: function() {
+        emit('subscribe', [
+            {'topic': 'test4', 'partition': 0, offset: 33326},
+            {'topic': 'test', 'partition': 0, offset: 1027270},
+        ]);
+        emit('start');
+    },
+
 }
