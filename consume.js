@@ -179,12 +179,15 @@ var tests = {
     },
 
     subscribeAllowed: function() {
-        emit('subscribe', ['test']);
         emit('subscribe', ['test', 'test4']);
     },
 
+    subscribeNotExist: function() {
+        emit('subscribe', ['boogers']);
+    },
+
     subscribeNotAllowed: function() {
-        emit('subscribe', ['test', 'nopeee']);
+        emit('subscribe', ['test3']);
     },
 
     assignAllowed: function() {
