@@ -78,6 +78,11 @@ var tests = {
         .delay(2000).then(emit.bind(null, 'disconnect'));
     },
 
+
+    badSubscribe: function() {
+        emit('subscribe', 'test2')
+    },
+
     testSubscribeAfter: function() {
         emit('subscribe', ['test2'])
         emit('start');
@@ -90,7 +95,6 @@ var tests = {
         emit('start');
         BBPromise.delay(3000).then(emit.bind(null, 'disconnect'))
         .then(emit.bind(null, 'subscribe', ['^test.*']));
-
     },
 
     withFilter: function() {
@@ -209,6 +213,14 @@ var tests = {
     },
 
     assignMulti: function() {
+        emit('subscribe', [
+            {'topic': 'test4', 'partition': 0, offset: 34695},
+            {'topic': 'test', 'partition': 0, offset: 1146966},
+        ]);
+        emit('start');
+    },
+
+    assignMultiBadDataInTopic: function() {
         emit('subscribe', [
             {'topic': 'test4', 'partition': 0, offset: 33326},
             {'topic': 'test', 'partition': 0, offset: 1027270},
