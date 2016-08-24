@@ -115,6 +115,32 @@ describe('Kasocki', function() {
         });
     });
 
+    it('should fail subscribe to a single non existent topic', function(done) {
+        const client = createClient(serverPort);
+        client.on('ready', () => {
+            client.emit('subscribe', ['topic0'], (err, res) => {
+                // TODO check err type?
+                if (err) {
+                    done();
+                }
+                client.disconnect();
+            });
+        });
+    });
+
+    it('should fail subscribe to multiple topics, one of which does not exist', function(done) {
+        const client = createClient(serverPort);
+        client.on('ready', () => {
+            client.emit('subscribe', ['topic1', 'topic0'], (err, res) => {
+                // TODO check err type?
+                if (err) {
+                    done();
+                }
+                client.disconnect();
+            });
+        });
+    });
+
     it('should subscribe to a single allowed topic', function(done) {
         const client = createClient(restrictiveServerPort);
         client.on('ready', () => {
@@ -144,7 +170,7 @@ describe('Kasocki', function() {
     it('should fail subscribe to a single unallowed topic', function(done) {
         const client = createClient(restrictiveServerPort);
         client.on('ready', () => {
-            client.emit('subscribe', ['not_allowed'], (err, res) => {
+            client.emit('subscribe', ['topic3'], (err, res) => {
                 // TODO check err type?
                 if (err) {
                     done();
@@ -154,7 +180,7 @@ describe('Kasocki', function() {
         });
     });
 
-    it('should fail subscribe to a multiple topics with at least one unallowed', function(done) {
+    it('should fail subscribe to a multiple topics with at least one not allowed', function(done) {
         const client = createClient(restrictiveServerPort);
         client.on('ready', () => {
             client.emit('subscribe', ['topic1', 'not_allowed'], (err, res) => {

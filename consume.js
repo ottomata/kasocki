@@ -70,10 +70,7 @@ var tests = {
         emit('start');
 
         BBPromise.delay(5000).then(emit.bind(null, 'pause'))
-        .delay(2000).then(emit.bind(null, 'start'))
-        .delay(3000).then(emit.bind(null, 'pause'))
-        .delay(2000).then(emit.bind(null, 'subscribe', ['^test.*']))
-        .delay(1000).then(emit.bind(null, 'start'))
+        .delay(5000).then(emit.bind(null, 'start'))
         .delay(3000).then(emit.bind(null, 'filter', {'name': '/^(red|green)/'}))
         .delay(2000).then(emit.bind(null, 'disconnect'));
     },
