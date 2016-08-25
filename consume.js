@@ -176,7 +176,8 @@ var tests = {
     },
 
     subscribeAllowed: function() {
-        emit('subscribe', ['test', 'test4']);
+        emit('subscribe', ['test', 'test6']);
+        emit('start');
     },
 
     subscribeNotExist: function() {
@@ -216,6 +217,8 @@ var tests = {
         emit('subscribe', [
             {'topic': 'test4', 'partition': 0, offset: 34695},
             {'topic': 'test', 'partition': 0, offset: 1146966},
+            {'topic': 'test6', 'partition': 0, offset: 0},
+
         ]);
         emit('start');
     },
