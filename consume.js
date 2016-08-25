@@ -75,6 +75,16 @@ var tests = {
         .delay(2000).then(emit.bind(null, 'disconnect'));
     },
 
+    runThroughAssign: function() {
+        emit('subscribe', [ { topic: 'test', partition: 0, offset: -1 } ]);
+        emit('start');
+
+        BBPromise.delay(5000).then(emit.bind(null, 'pause'))
+        .delay(5000).then(emit.bind(null, 'start'))
+        .delay(3000).then(emit.bind(null, 'filter', {'name': '/^(red|green)/'}))
+        .delay(2000).then(emit.bind(null, 'disconnect'));
+    },
+
 
     badSubscribe: function() {
         emit('subscribe', 'test2')

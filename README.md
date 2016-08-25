@@ -83,7 +83,6 @@ socket.disconnect();
 - Custom Error types?
 - websocket tests, integration tests.
 - return _kafka topic, partition offset outside of event/message?
-- figure out kafka group non assigment
 - docker with kafka
 - rdkafka statsd
 - logstash?
