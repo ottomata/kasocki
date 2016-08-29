@@ -79,7 +79,6 @@ socket.disconnect();
 
 ## TODO
 
-- Use assign instead of subscribe to avoid rebalance callback. ?
 - Custom Error types?
 - websocket tests, integration tests.
 - return _kafka topic, partition offset outside of event/message?
