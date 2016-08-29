@@ -1,3 +1,6 @@
+[![Travis](https://img.shields.io/travis/wikimedia/change-propagation.svg?maxAge=2592000&style=flat-square)](https://travis-ci.org/wikimedia/change-propagation)
+
+
 # Kasocki
 _Under heavy development, still a work in progress._
 
