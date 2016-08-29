@@ -10,7 +10,7 @@ var BBPromise = require('bluebird');
 
 var port = process.argv[2];
 var route = process.argv[3];
-var uri = 'http://localhost:'+ port + route
+var uri = 'http://127.0.0.1:'+ port + route
 
 var socket = require('socket.io-client')(uri)
 

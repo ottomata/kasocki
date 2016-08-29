@@ -1,10 +1,10 @@
+#!/usr/bin/env node
 'use strict';
 
 
 const http =  require('http');
 const socket_io = require('socket.io');
 const Kasocki = require('./lib/Kasocki');
-const rdkafka_statsd = require('./lib/rdkafka_statsd')('localhost:8128');
 
 
 /**
@@ -23,22 +23,19 @@ class KasockiServer {
             // You could alternatively pass a socket.io namespace.
             console.log(socket.id + ' connected');
             // Kafka broker should be running at localhost:9092
-            this.kasocki = new Kasocki(socket, {}, ['test', 'test4', 'test6'], {'event.stats': rdkafka_statsd});
+            this.kasocki = new Kasocki(socket, {'metadata.broker.list': '10.11.12.13:9092'}, ['test', 'test4', 'test6']);
         });
-
-
     }
 
     listen() {
         this.server.listen(6927);
-        console.log('Listening for socket.io connections at localhost:6927');
+        console.log('Listening for socket.io connections at on port 6927');
     }
 }
 
 if (require.main === module) {
     new KasockiServer().listen();
 }
-
 
 module.exports = KasockiServer
 

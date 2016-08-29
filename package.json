@@ -4,6 +4,7 @@
   "description": "Kafka -> socket.io",
   "main": "lib/Kasocki.js",
   "scripts": {
+    "start": "./server.js",
     "test": "mocha"
   },
   "repository": {
@@ -23,9 +24,10 @@
   "homepage": "https://github.com/ottomata/kasocki#readme",
   "dependencies": {
       "bunyan": "^1.8.1",
+      "bluebird": "^3.4.3",
       "socket.io": "^1.4.8",
       "serializerr": "^1.0.3",
-      "node-rdkafka": "Blizzard/node-rdkafka"
+      "node-rdkafka": "^0.3.3"
   },
   "devDependencies": {
     "istanbul": "^0.4.4",
