@@ -1,5 +1,4 @@
-[![Travis](https://img.shields.io/travis/wikimedia/change-propagation.svg?maxAge=2592000&style=flat-square)](https://travis-ci.org/wikimedia/change-propagation)
-
+[![Travis](https://travis-ci.org/ottomata/kasocki.svg?branch=master)](https://travis-ci.org/ottomata/kasocki)
 
 # Kasocki
 _Under heavy development, still a work in progress._
