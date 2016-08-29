@@ -35,6 +35,8 @@ class TestKasockiServer {
                 socket,
                 kafkaConfig,
                 allowedTopics,
+                // TODO; rearrange when kafkaEventHandlers is finalized
+                undefined,
                 this.log
             );
         });
@@ -191,8 +193,5 @@ describe('Kasocki', function() {
             });
         });
     });
-
-
-
 
 });
