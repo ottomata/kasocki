@@ -1,0 +1,8 @@
+{"id": 1,"name": "A green door","price": 12.50,"tags": ["home", "green"]}
+{"id": 2,"name": "red","price": 12.50,"tags": ["home", "green"]}
+{"id": 3,"name": "green","price": 12.50,"tags": ["home", "red"]}
+{"id": 4,"name": "green","price": 12.50,"tags": ["home", "green"]}
+{"id": 5,"name": "A green door","price": 13.50,"tags": ["farm", "green"]}
+{"id": 6,"name": "A green door","price": 2.50,"tags": ["farm", "red"]}
+{"id": 7,"name": "A green door","price": 12.50,"tags": ["farm", "house"]}
+{"id": 7,"name": "A green door","price": 12.50,"tags": ["farm", "house"], "why": "because"}
