@@ -6,14 +6,13 @@
 
 //  NOTE: these tests require a running kafka broker at localhost:9092
 
-const assert       = require('assert');
+const Kasocki      = require('../lib/Kasocki');
 
+const assert       = require('assert');
+const P            = require('bluebird');
+const bunyan       = require('bunyan');
 const http         = require('http');
 const socket_io    = require('socket.io');
-const Kasocki      = require('../lib/Kasocki');
-const bunyan       = require('bunyan');
-const P = require('bluebird');
-
 
 /**
  * Kasocki socket.io test server.
@@ -26,6 +25,7 @@ class TestKasockiServer {
         this.port = port;
         this.server = http.createServer();
         this.io = socket_io(this.server);
+        this.connectedClients = 0;
 
         this.log = bunyan.createLogger({
             name: 'KasockiTest',
@@ -43,7 +43,13 @@ class TestKasockiServer {
                 undefined,
                 this.log
             );
+            this.connectedClients += 1;
+
+            socket.on('disconnect', () => {
+                this.connectedClients -= 1;
+            })
         });
+
     }
 
     listen() {
@@ -57,23 +63,23 @@ class TestKasockiServer {
 }
 
 
-
-
-// function emitCallback(doneCallback, err, res) {
-//     console.log('in emit callack');
-//     if (err) {
-//         throw err;
-//     }
-//     else {
-//         doneCallback();
-//     }
-// }
-
-
+function assertTopicOffsetsInMessages(messages, topicOffsets) {
+    topicOffsets.forEach((topicOffset) => {
+        let foundIt = messages.find((msg) => {
+            return (
+                msg._kafka.topic === topicOffset.topic &&
+                msg._kafka.offset === topicOffset.offset
+            );
+        });
+        // assert that messages contained a message
+        // consumed from topic at offset.
+        assert.ok(foundIt)
+    });
+}
 
 
 describe('Kasocki', function() {
-    // this.timeout(5000);
+    this.timeout(3000);
 
     const topicNames = [
         'kasocki_test_01',
@@ -114,19 +120,19 @@ describe('Kasocki', function() {
             ['kasocki_test_01', 'kasocki_test_02', 'kasocki_test_03'].forEach((t) => {
                 assert.ok(availableTopics.indexOf(t) >= 0, `${t} not in available topics`);
             });
-            done();
             client.disconnect();
+            done();
         });
     });
 
-    it('should connect and return allowed topics', function(done) {
+    it('should connect and return only allowed topics', function(done) {
         const client = createClient(restrictiveServerPort);
         client.on('ready', (availableTopics) => {
             // Only allowedTopics should be returned on ready.
             let shouldBe =  ['kasocki_test_01', 'kasocki_test_02']
             assert.deepEqual(availableTopics, shouldBe, 'ready should return only allowed topics');
-            done();
             client.disconnect();
+            done();
         });
     });
 
@@ -147,12 +153,14 @@ describe('Kasocki', function() {
         const client = createClient(serverPort);
         client.on('ready', (availableTopics) => {
             client.emitAsync('subscribe', [topicNames[0]])
-                .then((res) => {
-                    let shouldBe = [ { topic: 'kasocki_test_01', partition: 0, offset: -1 } ]
-                    assert.deepEqual(res, shouldBe, 'subscribe');
-                    done();
-                    client.disconnect();
-                });
+            .then((subscribedTopics) => {
+                let shouldBe = [ { topic: 'kasocki_test_01', partition: 0, offset: -1 } ]
+                assert.deepEqual(subscribedTopics, shouldBe, 'subscribe');
+            })
+            .finally(() => {
+                client.disconnect();
+                done();
+            });
         });
     });
 
@@ -160,15 +168,17 @@ describe('Kasocki', function() {
         const client = createClient(serverPort);
         client.on('ready', (availableTopics) => {
             client.emitAsync('subscribe', topicNames)
-                .then((res) => {
-                    let shouldBe = [
-                        { topic: 'kasocki_test_01', partition: 0, offset: -1 },
-                        { topic: 'kasocki_test_02', partition: 0, offset: -1 }
-                    ]
-                    assert.deepEqual(res, shouldBe, 'subscribe');
-                    done();
-                    client.disconnect();
-                });
+            .then((subscribedTopics) => {
+                let shouldBe = [
+                    { topic: 'kasocki_test_01', partition: 0, offset: -1 },
+                    { topic: 'kasocki_test_02', partition: 0, offset: -1 }
+                ]
+                assert.deepEqual(subscribedTopics, shouldBe, 'subscribe');
+            })
+            .finally(() => {
+                client.disconnect();
+                done();
+            });
         });
     });
 
@@ -176,11 +186,14 @@ describe('Kasocki', function() {
         const client = createClient(serverPort);
         client.on('ready', (availableTopics) => {
             client.emitAsync('subscribe', 'not an array')
-                .catch((err) => {
-                    // TODO check err type?
-                    done();
-                    client.disconnect();
-                });
+            .catch((err) => {
+                // TODO check err type?
+                assert.ok(true, 'should throw an error');
+            })
+            .finally(() => {
+                client.disconnect();
+                done();
+            });
         });
     });
 
@@ -189,11 +202,14 @@ describe('Kasocki', function() {
         const client = createClient(serverPort);
         client.on('ready', (availableTopics) => {
             client.emitAsync('subscribe', ['non-existent-topic'])
-                .catch((err) => {
-                    // TODO check err type?
-                    done();
-                    client.disconnect();
-                });
+            .catch((err) => {
+                // TODO check err type?
+                assert.ok(true, 'should throw an error');
+            })
+            .finally(() => {
+                client.disconnect();
+                done();
+            });
         });
     });
 
@@ -201,11 +217,14 @@ describe('Kasocki', function() {
         const client = createClient(serverPort);
         client.on('ready', (availableTopics) => {
             client.emitAsync('subscribe', [topicNames[0], 'non-existent-topic'])
-                .catch((err) => {
-                    // TODO check err type?
-                    done();
-                    client.disconnect();
-                });
+            .catch((err) => {
+                // TODO check err type?
+                assert.ok(true, 'should throw an error');
+            })
+            .finally(() => {
+                client.disconnect();
+                done();
+            });
         });
     });
 
@@ -213,12 +232,14 @@ describe('Kasocki', function() {
         const client = createClient(restrictiveServerPort);
         client.on('ready', (availableTopics) => {
             client.emitAsync('subscribe', [topicNames[0]])
-                .then((res) => {
-                    let shouldBe = [ { topic: 'kasocki_test_01', partition: 0, offset: -1 } ]
-                    assert.deepEqual(res, shouldBe, 'subscribe');
-                    done();
-                    client.disconnect();
-                });
+            .then((res) => {
+                let shouldBe = [ { topic: 'kasocki_test_01', partition: 0, offset: -1 } ]
+                assert.deepEqual(res, shouldBe, 'subscribe');
+            })
+            .finally(() => {
+                client.disconnect();
+                done();
+            });
         });
     });
 
@@ -226,15 +247,17 @@ describe('Kasocki', function() {
         const client = createClient(restrictiveServerPort);
         client.on('ready', (availableTopics) => {
             client.emitAsync('subscribe', topicNames)
-                .then((res) => {
-                    let shouldBe = [
-                        { topic: 'kasocki_test_01', partition: 0, offset: -1 },
-                        { topic: 'kasocki_test_02', partition: 0, offset: -1 }
-                    ]
-                    assert.deepEqual(res, shouldBe, 'subscribe');
-                    done();
-                    client.disconnect();
-                });
+            .then((res) => {
+                let shouldBe = [
+                    { topic: 'kasocki_test_01', partition: 0, offset: -1 },
+                    { topic: 'kasocki_test_02', partition: 0, offset: -1 }
+                ]
+                assert.deepEqual(res, shouldBe, 'subscribe');
+            })
+            .finally(() => {
+                client.disconnect();
+                done();
+            });
         });
     });
 
@@ -242,11 +265,14 @@ describe('Kasocki', function() {
         const client = createClient(restrictiveServerPort);
         client.on('ready', (availableTopics) => {
             client.emitAsync('subscribe', ['non-existent-topic'])
-                .catch((err) => {
-                    // TODO check err type?
-                    done();
-                    client.disconnect();
-                });
+            .catch((err) => {
+                // TODO check err type?
+                assert.ok(true, 'should throw an error');
+            })
+            .finally(() => {
+                client.disconnect();
+                done();
+            });
         });
     });
 
@@ -254,11 +280,14 @@ describe('Kasocki', function() {
         const client = createClient(restrictiveServerPort);
         client.on('ready', (availableTopics) => {
             client.emitAsync('subscribe', [topicNames[0], 'non-existent-topic'])
-                .catch((err) => {
-                    // TODO check err type?
-                    done();
-                    client.disconnect();
-                });
+            .catch((err) => {
+                // TODO check err type?
+                assert.ok(true, 'should throw an error');
+            })
+            .finally(() => {
+                client.disconnect();
+                done();
+            });
         });
     });
 
@@ -267,86 +296,108 @@ describe('Kasocki', function() {
 
     it('should subscribe with offsets to a single topic', function(done) {
         const client = createClient(serverPort);
+        const assignment = [ { topic: topicNames[0], partition: 0, offset: 0 } ];
+
         client.on('ready', (availableTopics) => {
-            let assignment = [ { topic: topicNames[0], partition: 0, offset: 0 } ];
             client.emitAsync('subscribe', assignment)
-                .then((res) => {
-                    assert.deepEqual(res, assignment, 'subscribe at offset');
-                    done();
-                    client.disconnect();
-                });
+            .then((res) => {
+                assert.deepEqual(res, assignment, 'subscribe at offset');
+            })
+            .finally(() => {
+                client.disconnect();
+                done();
+            });
         });
     });
 
     it('should subscribe with offsets to a single allowwed topic', function(done) {
         const client = createClient(restrictiveServerPort);
+        const assignment = [ { topic: topicNames[0], partition: 0, offset: 0 } ];
+
         client.on('ready', (availableTopics) => {
-            let assignment = [ { topic: topicNames[0], partition: 0, offset: 0 } ];
             client.emitAsync('subscribe', assignment)
-                .then((res) => {
-                    assert.deepEqual(res, assignment, 'subscribe at offset');
-                    done();
-                    client.disconnect();
-                });
+            .then((res) => {
+                assert.deepEqual(res, assignment, 'subscribe at offset');
+            })
+            .finally(() => {
+                client.disconnect();
+                done();
+            });
         });
     });
 
     it('should fail subscribe with offsets to a single not available topic', function(done) {
         const client = createClient(serverPort);
+        const assignment = [ { topic: 'not-a-topic', partition: 0, offset: 0 } ];
+
         client.on('ready', (availableTopics) => {
-            let assignment = [ { topic: 'not-a-topic', partition: 0, offset: 0 } ];
             client.emitAsync('subscribe', assignment)
-                .catch((err) => {
-                    // TODO check err type?
-                    done();
-                    client.disconnect();
-                });
+            .catch((err) => {
+                // TODO check err type?
+                assert.ok(true, 'should throw an error');
+            })
+            .finally(() => {
+                client.disconnect();
+                done();
+            });
         });
     });
 
     it('should fail subscribe with offsets to a single not allowed topic', function(done) {
         const client = createClient(restrictiveServerPort);
+        const assignment = [ { topic: 'kasocki_test_03', partition: 0, offset: 0 } ];
+
         client.on('ready', (availableTopics) => {
-            let assignment = [ { topic: 'kasocki_test_03', partition: 0, offset: 0 } ];
             client.emitAsync('subscribe', assignment)
-                .catch((err) => {
-                    // TODO check err type?
-                    done();
-                    client.disconnect();
-                });
+            .catch((err) => {
+                // TODO check err type?
+                assert.ok(true, 'should throw an error');
+            })
+            .finally(() => {
+                client.disconnect();
+                done();
+            });
         });
     });
 
     it('should subscribe with offsets to a multiple topics', function(done) {
         const client = createClient(serverPort);
+        const assignment = [
+            { topic: topicNames[0], partition: 0, offset: 0 },
+            { topic: topicNames[1], partition: 0, offset: 0 }
+        ];
+
         client.on('ready', (availableTopics) => {
-            let assignment = [
-                { topic: topicNames[0], partition: 0, offset: 0 },
-                { topic: topicNames[1], partition: 0, offset: 0 }
-            ];
             client.emitAsync('subscribe', assignment)
-                .then((res) => {
-                    assert.deepEqual(res, assignment, 'subscribe at offset');
-                    done();
-                    client.disconnect();
-                });
+            .then((res) => {
+                assert.deepEqual(res, assignment, 'subscribe at offset');
+            })
+            .finally(() => {
+                client.disconnect();
+                done();
+            });
         });
     });
 
 
     it('should fail subscribe with offsets to a multiple topics where one is not available', function(done) {
         const client = createClient(serverPort);
+        const assignment = [
+            { topic: topicNames[0], partition: 0, offset: 0 },
+            { topic: 'not-a-topic', partition: 0, offset: 0 }
+        ];
+
         client.on('ready', (availableTopics) => {
-            let assignment = [
-                { topic: topicNames[0], partition: 0, offset: 0 },
-                { topic: 'not-a-topic', partition: 0, offset: 0 }
-            ];
             client.emitAsync('subscribe', assignment)
-                .catch((err) => {
-                    // TODO check err type?
-                    done();
-                    client.disconnect();
-                });
+            .catch((err) => {
+                client.disconnect();
+                // TODO check err type?
+                assert.ok(true, 'should throw an error');
+            })
+            .finally(() => {
+                client.disconnect();
+                done();
+            });
         });
     });
 
@@ -354,25 +405,29 @@ describe('Kasocki', function() {
 
     it('should consume a single message from a single topic', function(done) {
         const client = createClient(serverPort);
+        const assignment = [{ topic: topicNames[0], partition: 0, offset: 0 }];
+
         client.on('ready', (availableTopics) => {
-            let assignment = [{ topic: topicNames[0], partition: 0, offset: 0 }];
             client.emitAsync('subscribe', assignment)
-                .then((subscribedTopics) => {
-                    // consume
-                    return client.emitAsync('consume', null)
-                })
-                .then((msg) => {
-                    assert.equal(msg._kafka.offset, 0, `check kafka offset in ${topicNames[0]}`);
-                    done();
-                    client.disconnect();
-                });
+            .then((subscribedTopics) => {
+                // consume
+                return client.emitAsync('consume', null)
+            })
+            .then((msg) => {
+                assert.equal(msg._kafka.offset, 0, `check kafka offset in ${topicNames[0]}`);
+            })
+            .finally(() => {
+                client.disconnect();
+                done();
+            });
         })
     });
 
     it('should consume two messages from a single topic', function(done) {
         const client = createClient(serverPort);
+        const assignment = [{ topic: topicNames[1], partition: 0, offset: 0 }];
+
         client.on('ready', () => {
-            let assignment = [{ topic: topicNames[1], partition: 0, offset: 0 }];
             client.emitAsync('subscribe', assignment)
             .then((subscribedTopics) => {
                 // consume
@@ -385,10 +440,208 @@ describe('Kasocki', function() {
             })
             .then((msg) => {
                 assert.equal(msg._kafka.offset, 1, `check kafka offset in ${topicNames[0]}`);
-                done();
+            })
+            .finally(() => {
                 client.disconnect();
+                done();
             });
         });
     });
+
+    it('should consume three messages from two topics', function(done) {
+        const client = createClient(serverPort);
+        client.on('ready', () => {
+            const assignment = [
+                { topic: topicNames[0], partition: 0, offset: 0 },
+                { topic: topicNames[1], partition: 0, offset: 0 }
+            ];
+            client.emitAsync('subscribe', assignment)
+            .then((subscribedTopics) => {
+                // Consume three messages
+                return Promise.all([
+                    client.emitAsync('consume', null),
+                    client.emitAsync('consume', null),
+                    client.emitAsync('consume', null)
+                ]);
+            })
+            .then((messages) => {
+                // Look for each of the following topic and offsets
+                // to have been consumed.
+                let shouldHave = [
+                    { topic: 'kasocki_test_01', offset: 0 },
+                    { topic: 'kasocki_test_02', offset: 0 },
+                    { topic: 'kasocki_test_02', offset: 1 }
+                ]
+                assertTopicOffsetsInMessages(messages, shouldHave);
+            })
+            .finally(() => {
+                client.disconnect();
+                done();
+            });
+        });
+    });
+
+
+    // == Test filter
+
+    it('should consume two messages from two topics with a simple filter', function(done) {
+        const client = createClient(serverPort);
+
+        const assignment = [
+            { topic: topicNames[0], partition: 0, offset: 0 },
+            { topic: topicNames[1], partition: 0, offset: 0 }
+        ];
+
+        // Filter where price is 25.00
+        const filters = {
+            'price': 25.00
+        }
+
+        client.on('ready', () => {
+
+            client.emitAsync('subscribe', assignment)
+            .then((subscribedTopics) => {
+                return client.emitAsync('filter', filters)
+            })
+            .then(() => {
+                // Consume two messages
+                return Promise.all([
+                    client.emitAsync('consume', null),
+                    client.emitAsync('consume', null)
+                ]);
+            })
+            .then((messages) => {
+                // Look for each of the following topic and offsets
+                // to have been consumed.
+                let shouldHave = [
+                    { topic: 'kasocki_test_01', offset: 0 },
+                    { topic: 'kasocki_test_02', offset: 1 }
+                ]
+                assertTopicOffsetsInMessages(messages, shouldHave);
+            })
+            .finally(() => {
+                client.disconnect();
+                done();
+            });
+        });
+    });
+
+    it('should consume two messages from two topics with a dotted filter', function(done) {
+        const client = createClient(serverPort);
+
+        const assignment = [
+            { topic: topicNames[0], partition: 0, offset: 0 },
+            { topic: topicNames[1], partition: 0, offset: 0 }
+        ];
+
+        // Filter where user.last_name is Berry
+        const filters = {
+            'user.last_name': 'Berry'
+        }
+
+        client.on('ready', () => {
+            client.emitAsync('subscribe', assignment)
+            .then((subscribedTopics) => {
+                return client.emitAsync('filter', filters)
+            })
+            .then((r) => {
+                // Consume two messages
+                return Promise.all([
+                    client.emitAsync('consume', null),
+                    client.emitAsync('consume', null)
+                ]);
+            })
+            .then((messages) => {
+                // Look for each of the following topic and offsets
+                // to have been consumed.
+                let shouldHave = [
+                    { topic: 'kasocki_test_01', offset: 0 },
+                    { topic: 'kasocki_test_02', offset: 0 }
+                ]
+                assertTopicOffsetsInMessages(messages, shouldHave);
+            })
+            .finally(() => {
+                client.disconnect();
+                done();
+            });
+        });
+    });
+
+    it('should consume two messages from two topics with a regex filter', function(done) {
+        const client = createClient(serverPort);
+
+        const assignment = [
+            { topic: topicNames[0], partition: 0, offset: 0 },
+            { topic: topicNames[1], partition: 0, offset: 0 }
+        ];
+
+        // Filter where name matches a regex
+        const filters = {
+            'name': '/(green|red) doors?$/'
+        }
+
+        client.on('ready', () => {
+            client.emitAsync('subscribe', assignment)
+            .then((subscribedTopics) => {
+                return client.emitAsync('filter', filters)
+            })
+            .then(() => {
+                // Consume two messages
+                return Promise.all([
+                    client.emitAsync('consume', null),
+                    client.emitAsync('consume', null)
+                ]);
+            })
+            .then((messages) => {
+                // Look for each of the following topic and offsets
+                // to have been consumed.
+                let shouldHave = [
+                    { topic: 'kasocki_test_02', offset: 0 },
+                    { topic: 'kasocki_test_02', offset: 1 }
+                ]
+                assertTopicOffsetsInMessages(messages, shouldHave);
+            })
+            .finally(() => {
+                client.disconnect();
+                done();
+            });
+        });
+    });
+
+    it('should consume one message from two topics with a dotted and a regex filter', function(done) {
+        const client = createClient(serverPort);
+
+        const assignment = [
+            { topic: topicNames[0], partition: 0, offset: 0 },
+            { topic: topicNames[1], partition: 0, offset: 0 }
+        ];
+
+        // Filter where user.last_name is Berry and name matches a regex
+        const filters = {
+            'user.last_name': 'Berry',
+            'name': '/(green|red) doors?$/'
+        }
+
+        client.on('ready', () => {
+            client.emitAsync('subscribe', assignment)
+            .then((subscribedTopics) => {
+                return client.emitAsync('filter', filters)
+            })
+            .then(() => {
+                // consume one message
+                return client.emitAsync('consume', null)
+            })
+            .then((msg) => {
+                assert.equal(msg._kafka.topic, topicNames[1], `Should find this in topic ${topicNames[1]}`);
+                assert.equal(msg._kafka.offset, 0, 'Should find this in offset 0');
+            })
+            .finally(() => {
+                client.disconnect();
+                done();
+            });
+        });
+    });
+
+
 
 });

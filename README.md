@@ -87,6 +87,7 @@ socket.disconnect();
 - docker with kafka
 - rdkafka statsd
 - logstash?
+- Filter for array values
 
 
 ## Blizzard Consume Modes

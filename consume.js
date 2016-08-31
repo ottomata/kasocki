@@ -105,16 +105,23 @@ var tests = {
     },
 
     withFilter: function() {
-        emit('subscribe', ['^test.*'])
+        emit('subscribe', ['test'])
         emit('start');
         BBPromise.delay(3000).then(emit.bind(null, 'filter', {'name': 'A green door'} ))
-        .delay(3000).then(emit.bind(null, 'subscribe', ['test2'] ))
+        .delay(3000).then(emit.bind(null, 'filter', null))
+        .delay(3000).then(emit.bind(null, 'disconnect'));
+    },
+
+    withDottedFilter: function() {
+        emit('subscribe', ['test'])
+        emit('start');
+        BBPromise.delay(3000).then(emit.bind(null, 'filter', {'user.name': 'mike'} ))
         .delay(3000).then(emit.bind(null, 'filter', null))
         .delay(3000).then(emit.bind(null, 'disconnect'));
     },
 
     withRegexFilter: function() {
-        emit('subscribe', ['^test.*'])
+        emit('subscribe', ['test'])
         emit('start');
         BBPromise.delay(3000).then(emit.bind(null, 'filter', {'name': '/green/'} ))
         .delay(3000).then(emit.bind(null, 'filter', null))
@@ -122,7 +129,7 @@ var tests = {
     },
 
     withBadRegexFilter: function() {
-        emit('subscribe', ['^test.*'])
+        emit('subscribe', ['test'])
         emit('start');
         BBPromise.delay(1000).then(emit.bind(null, 'filter', {'name': '/green(/'} ))
         .delay(1000).then(emit.bind(null, 'filter', null))
@@ -130,7 +137,7 @@ var tests = {
     },
 
     withRegexAndLiteralFilter: function() {
-        emit('subscribe', ['^test.*'])
+        emit('subscribe', ['test'])
         emit('start');
         BBPromise.delay(3000).then(emit.bind(null, 'filter', {'name': '/green/', 'why': 'because'} ))
         .delay(3000).then(emit.bind(null, 'filter', null))

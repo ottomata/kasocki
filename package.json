@@ -4,8 +4,8 @@
   "description": "Kafka -> socket.io",
   "main": "lib/Kasocki.js",
   "scripts": {
-    "start": "./server.js",
-    "test": "test/utils/clean_kafka.sh && mocha"
+    "start": "./server.js | ./node_modules/bunyan/bin/bunyan",
+    "test": "export UV_THREADPOOL_LIMIT=128 && test/utils/clean_kafka.sh && mocha"
   },
   "repository": {
     "type": "git",
