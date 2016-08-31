@@ -50,6 +50,7 @@ sleep 5
 
 createTopic kasocki_test_01
 createTopic kasocki_test_02
+createTopic kasocki_test_03
 
 produceTestData kasocki_test_01 $(dirname $0)/test_data1.json
 produceTestData kasocki_test_02 $(dirname $0)/test_data2.json
