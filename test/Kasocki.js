@@ -95,7 +95,7 @@ function assertTopicOffsetsInAssignments(assignments, topicOffsets) {
 
 
 describe('Kasocki', function() {
-    this.timeout(5000);
+    this.timeout(20000);
 
     const topicNames = [
         'kasocki_test_01',
@@ -733,8 +733,8 @@ describe('Kasocki', function() {
                 // start consuming, the on message handler will collect them
                 return client.emitAsync('start', null);
             })
-            // wait 2 seconds to finish getting messages
-            .delay(2000)
+            // wait 3 seconds to finish getting messages
+            .delay(3000)
             .then(() => {
                 // Look for each of the following topic and offsets
                 // to have been consumed.
@@ -783,8 +783,8 @@ describe('Kasocki', function() {
                 // start consuming, the on message handler will collect them
                 return client.emitAsync('start', null);
             })
-            // wait 2 seconds to finish getting messages
-            .delay(2000)
+            // wait 3 seconds to finish getting messages
+            .delay(3000)
             .then(() => {
                 // Look for each of the following topic and offsets
                 // to have been consumed.
