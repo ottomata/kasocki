@@ -73,7 +73,23 @@ function assertTopicOffsetsInMessages(messages, topicOffsets) {
         });
         // assert that messages contained a message
         // consumed from topic at offset.
-        assert.ok(foundIt)
+        assert.ok(foundIt, `message in ${topicOffset.topic} at ${topicOffset.partition} should be found`);
+    });
+}
+
+function assertTopicOffsetsInAssignments(assignments, topicOffsets) {
+    topicOffsets.forEach((t) => {
+        let foundIt = assignments.find((assigned) => {
+            return (
+                assigned.topic === t.topic &&
+                assigned.partition === t.partition &&
+                assigned.offset === t.offset
+            );
+        });
+        assert.ok(
+            foundIt,
+            `topic ${t.topic} in partition ${t.partition} was subscribed and assigned offset ${t.offset}`
+        );
     });
 }
 
@@ -128,9 +144,18 @@ describe('Kasocki', function() {
     it('should connect and return only allowed topics', function(done) {
         const client = createClient(restrictiveServerPort);
         client.on('ready', (availableTopics) => {
+            assert.equal(
+                availableTopics.length,
+                topicNames.length,
+                `Only ${topicNames.length} topics should be available for consumption`
+            );
             // Only allowedTopics should be returned on ready.
-            let shouldBe =  topicNames;
-            assert.deepEqual(availableTopics, shouldBe, 'ready should return only allowed topics');
+            topicNames.forEach((t) => {
+                let foundIt = availableTopics.find((availableTopic) => {
+                    return (availableTopic === t);
+                });
+                assert.ok(foundIt, `topic ${t} is available for consumption`);
+            });
             client.disconnect();
             done();
         });
@@ -153,9 +178,14 @@ describe('Kasocki', function() {
         const client = createClient(serverPort);
         client.on('ready', (availableTopics) => {
             client.emitAsync('subscribe', [topicNames[0]])
-            .then((subscribedTopics) => {
+            .then((assignments) => {
                 let shouldBe = [ { topic: topicNames[0], partition: 0, offset: -1 } ]
-                assert.deepEqual(subscribedTopics, shouldBe, 'subscribe');
+                assert.equal(
+                    assignments.length,
+                    shouldBe.length,
+                    `${shouldBe.length} topic partitions should be assigned`
+                );
+                assertTopicOffsetsInAssignments(assignments, shouldBe);
             })
             .finally(() => {
                 client.disconnect();
@@ -168,12 +198,17 @@ describe('Kasocki', function() {
         const client = createClient(serverPort);
         client.on('ready', (availableTopics) => {
             client.emitAsync('subscribe', topicNames)
-            .then((subscribedTopics) => {
+            .then((assignments) => {
                 let shouldBe = [
                     { topic: topicNames[0], partition: 0, offset: -1 },
                     { topic: topicNames[1], partition: 0, offset: -1 }
                 ]
-                assert.deepEqual(subscribedTopics, shouldBe, 'subscribe');
+                assert.equal(
+                    assignments.length,
+                    shouldBe.length,
+                    `${shouldBe.length} topic partitions should be assigned`
+                );
+                assertTopicOffsetsInAssignments(assignments, shouldBe);
             })
             .finally(() => {
                 client.disconnect();
@@ -232,9 +267,14 @@ describe('Kasocki', function() {
         const client = createClient(restrictiveServerPort);
         client.on('ready', (availableTopics) => {
             client.emitAsync('subscribe', [topicNames[0]])
-            .then((res) => {
+            .then((assignments) => {
                 let shouldBe = [ { topic: topicNames[0], partition: 0, offset: -1 } ]
-                assert.deepEqual(res, shouldBe, 'subscribe');
+                assert.equal(
+                    assignments.length,
+                    shouldBe.length,
+                    `${shouldBe.length} topic partitions should be assigned`
+                );
+                assertTopicOffsetsInAssignments(assignments, shouldBe);
             })
             .finally(() => {
                 client.disconnect();
@@ -247,12 +287,17 @@ describe('Kasocki', function() {
         const client = createClient(restrictiveServerPort);
         client.on('ready', (availableTopics) => {
             client.emitAsync('subscribe', topicNames)
-            .then((res) => {
+            .then((assignments) => {
                 let shouldBe = [
                     { topic: topicNames[0], partition: 0, offset: -1 },
                     { topic: topicNames[1], partition: 0, offset: -1 }
                 ]
-                assert.deepEqual(res, shouldBe, 'subscribe');
+                assert.equal(
+                    assignments.length,
+                    shouldBe.length,
+                    `${shouldBe.length} topic partitions should be assigned`
+                );
+                assertTopicOffsetsInAssignments(assignments, shouldBe);
             })
             .finally(() => {
                 client.disconnect();
@@ -300,8 +345,13 @@ describe('Kasocki', function() {
 
         client.on('ready', (availableTopics) => {
             client.emitAsync('subscribe', assignment)
-            .then((res) => {
-                assert.deepEqual(res, assignment, 'subscribe at offset');
+            .then((returnedAssignment) => {
+                assert.equal(
+                    returnedAssignment.length,
+                    assignment.length,
+                    `${assignment.length} topic partitions should be assigned`
+                );
+                assertTopicOffsetsInAssignments(returnedAssignment, assignment);
             })
             .finally(() => {
                 client.disconnect();
@@ -316,8 +366,13 @@ describe('Kasocki', function() {
 
         client.on('ready', (availableTopics) => {
             client.emitAsync('subscribe', assignment)
-            .then((res) => {
-                assert.deepEqual(res, assignment, 'subscribe at offset');
+            .then((returnedAssignment) => {
+                assert.equal(
+                    returnedAssignment.length,
+                    assignment.length,
+                    `${assignment.length} topic partitions should be assigned`
+                );
+                assertTopicOffsetsInAssignments(returnedAssignment, assignment);
             })
             .finally(() => {
                 client.disconnect();
@@ -369,8 +424,13 @@ describe('Kasocki', function() {
 
         client.on('ready', (availableTopics) => {
             client.emitAsync('subscribe', assignment)
-            .then((res) => {
-                assert.deepEqual(res, assignment, 'subscribe at offset');
+            .then((returnedAssignment) => {
+                assert.equal(
+                    returnedAssignment.length,
+                    assignment.length,
+                    `${assignment.length} topic partitions should be assigned`
+                );
+                assertTopicOffsetsInAssignments(returnedAssignment, assignment);
             })
             .finally(() => {
                 client.disconnect();
