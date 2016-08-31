@@ -1,8 +1,20 @@
 #!/bin/bash
 
-KAFKA_TOPICS_CMD="kafka-topics"
-KAFKA_CONSOLE_PRODUCER_CMD="kafka-console-producer"
+check_kafka_home() {
+    if [ "x$KAFKA_HOME" = "x" ]; then
+      echo "Please set KAFKA_HOME env variable to the kafka install directory"
+      exit 1
+    fi
+}
 
+if [ -z "${KAFKA_TOPICS_CMD}" ]; then
+    check_kafka_home
+    KAFKA_TOPICS_CMD="${KAFKA_HOME}/bin/kafka-topics.sh"
+fi
+if [ -z "${KAFKA_CONSOLE_PRODUCER_CMD}" ]; then
+    check_kafka_home
+    KAFKA_CONSOLE_PRODUCER_CMD="${KAFKA_HOME}/bin/kafka-console-producer.sh"
+fi
 
 dropTopics ( ) {
   if [ "$#" -eq 1 ]
