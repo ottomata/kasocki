@@ -79,7 +79,7 @@ function assertTopicOffsetsInMessages(messages, topicOffsets) {
 
 
 describe('Kasocki', function() {
-    this.timeout(3000);
+    this.timeout(5000);
 
     const topicNames = [
         'kasocki_test_01',
@@ -129,7 +129,7 @@ describe('Kasocki', function() {
         const client = createClient(restrictiveServerPort);
         client.on('ready', (availableTopics) => {
             // Only allowedTopics should be returned on ready.
-            let shouldBe =  ['kasocki_test_01', 'kasocki_test_02']
+            let shouldBe =  topicNames;
             assert.deepEqual(availableTopics, shouldBe, 'ready should return only allowed topics');
             client.disconnect();
             done();
@@ -154,7 +154,7 @@ describe('Kasocki', function() {
         client.on('ready', (availableTopics) => {
             client.emitAsync('subscribe', [topicNames[0]])
             .then((subscribedTopics) => {
-                let shouldBe = [ { topic: 'kasocki_test_01', partition: 0, offset: -1 } ]
+                let shouldBe = [ { topic: topicNames[0], partition: 0, offset: -1 } ]
                 assert.deepEqual(subscribedTopics, shouldBe, 'subscribe');
             })
             .finally(() => {
@@ -170,8 +170,8 @@ describe('Kasocki', function() {
             client.emitAsync('subscribe', topicNames)
             .then((subscribedTopics) => {
                 let shouldBe = [
-                    { topic: 'kasocki_test_01', partition: 0, offset: -1 },
-                    { topic: 'kasocki_test_02', partition: 0, offset: -1 }
+                    { topic: topicNames[0], partition: 0, offset: -1 },
+                    { topic: topicNames[1], partition: 0, offset: -1 }
                 ]
                 assert.deepEqual(subscribedTopics, shouldBe, 'subscribe');
             })
@@ -233,7 +233,7 @@ describe('Kasocki', function() {
         client.on('ready', (availableTopics) => {
             client.emitAsync('subscribe', [topicNames[0]])
             .then((res) => {
-                let shouldBe = [ { topic: 'kasocki_test_01', partition: 0, offset: -1 } ]
+                let shouldBe = [ { topic: topicNames[0], partition: 0, offset: -1 } ]
                 assert.deepEqual(res, shouldBe, 'subscribe');
             })
             .finally(() => {
@@ -249,8 +249,8 @@ describe('Kasocki', function() {
             client.emitAsync('subscribe', topicNames)
             .then((res) => {
                 let shouldBe = [
-                    { topic: 'kasocki_test_01', partition: 0, offset: -1 },
-                    { topic: 'kasocki_test_02', partition: 0, offset: -1 }
+                    { topic: topicNames[0], partition: 0, offset: -1 },
+                    { topic: topicNames[1], partition: 0, offset: -1 }
                 ]
                 assert.deepEqual(res, shouldBe, 'subscribe');
             })
@@ -468,10 +468,11 @@ describe('Kasocki', function() {
                 // Look for each of the following topic and offsets
                 // to have been consumed.
                 let shouldHave = [
-                    { topic: 'kasocki_test_01', offset: 0 },
-                    { topic: 'kasocki_test_02', offset: 0 },
-                    { topic: 'kasocki_test_02', offset: 1 }
+                    { topic: topicNames[0], offset: 0 },
+                    { topic: topicNames[1], offset: 0 },
+                    { topic: topicNames[1], offset: 1 }
                 ]
+                assert.equal(messages.length, shouldHave.length, `should have consumed ${shouldHave.length} messages`);
                 assertTopicOffsetsInMessages(messages, shouldHave);
             })
             .finally(() => {
@@ -514,9 +515,10 @@ describe('Kasocki', function() {
                 // Look for each of the following topic and offsets
                 // to have been consumed.
                 let shouldHave = [
-                    { topic: 'kasocki_test_01', offset: 0 },
-                    { topic: 'kasocki_test_02', offset: 1 }
+                    { topic: topicNames[0], offset: 0 },
+                    { topic: topicNames[1], offset: 1 }
                 ]
+                assert.equal(messages.length, shouldHave.length, `should have consumed ${shouldHave.length} messages`);
                 assertTopicOffsetsInMessages(messages, shouldHave);
             })
             .finally(() => {
@@ -555,9 +557,10 @@ describe('Kasocki', function() {
                 // Look for each of the following topic and offsets
                 // to have been consumed.
                 let shouldHave = [
-                    { topic: 'kasocki_test_01', offset: 0 },
-                    { topic: 'kasocki_test_02', offset: 0 }
+                    { topic: topicNames[0], offset: 0 },
+                    { topic: topicNames[1], offset: 0 }
                 ]
+                assert.equal(messages.length, shouldHave.length, `should have consumed ${shouldHave.length} messages`);
                 assertTopicOffsetsInMessages(messages, shouldHave);
             })
             .finally(() => {
@@ -596,9 +599,10 @@ describe('Kasocki', function() {
                 // Look for each of the following topic and offsets
                 // to have been consumed.
                 let shouldHave = [
-                    { topic: 'kasocki_test_02', offset: 0 },
-                    { topic: 'kasocki_test_02', offset: 1 }
+                    { topic: topicNames[1], offset: 0 },
+                    { topic: topicNames[1], offset: 1 }
                 ]
+                assert.equal(messages.length, shouldHave.length, `should have consumed ${shouldHave.length} messages`);
                 assertTopicOffsetsInMessages(messages, shouldHave);
             })
             .finally(() => {
@@ -632,8 +636,12 @@ describe('Kasocki', function() {
                 return client.emitAsync('consume', null)
             })
             .then((msg) => {
-                assert.equal(msg._kafka.topic, topicNames[1], `Should find this in topic ${topicNames[1]}`);
-                assert.equal(msg._kafka.offset, 0, 'Should find this in offset 0');
+                // Look for each of the following topic and offsets
+                // to have been consumed.
+                let shouldHave = [
+                    { topic: topicNames[1], offset: 0 },
+                ]
+                assertTopicOffsetsInMessages([msg], shouldHave);
             })
             .finally(() => {
                 client.disconnect();
@@ -643,5 +651,94 @@ describe('Kasocki', function() {
     });
 
 
+    // == Test push based consume with start
+
+    it('should handle three messages from two topics', function(done) {
+        const client = createClient(serverPort);
+
+        const assignment = [
+            { topic: topicNames[0], partition: 0, offset: 0 },
+            { topic: topicNames[1], partition: 0, offset: 0 }
+        ];
+
+        // Collect messages
+        var messages = [];
+        client.on('message', (msg) => {
+            messages.push(msg);
+        });
+
+        client.on('ready', () => {
+            client.emitAsync('subscribe', assignment)
+            .then((subscribedTopics) => {
+                // start consuming, the on message handler will collect them
+                return client.emitAsync('start', null);
+            })
+            // wait 2 seconds to finish getting messages
+            .delay(2000)
+            .then(() => {
+                // Look for each of the following topic and offsets
+                // to have been consumed.
+                let shouldHave = [
+                    { topic: topicNames[0], offset: 0 },
+                    { topic: topicNames[1], offset: 0 },
+                    { topic: topicNames[1], offset: 1 }
+                ]
+                assert.equal(messages.length, shouldHave.length, `should have consumed ${shouldHave.length} messages`);
+                assertTopicOffsetsInMessages(messages, shouldHave);
+            })
+            .finally(() => {
+                client.disconnect();
+                done();
+            });
+        });
+    });
+
+
+    it('should handle one message from two topics with a dotted and a regex filter', function(done) {
+        const client = createClient(serverPort);
+
+        const assignment = [
+            { topic: topicNames[0], partition: 0, offset: 0 },
+            { topic: topicNames[1], partition: 0, offset: 0 }
+        ];
+
+        // Filter where user.last_name is Berry and name matches a regex
+        const filters = {
+            'user.last_name': 'Berry',
+            'name': '/(green|red) doors?$/'
+        }
+
+        // Collect messages
+        var messages = [];
+        client.on('message', (msg) => {
+            messages.push(msg);
+        });
+
+        client.on('ready', () => {
+            client.emitAsync('subscribe', assignment)
+            .then((subscribedTopics) => {
+                return client.emitAsync('filter', filters)
+            })
+            .then(() => {
+                // start consuming, the on message handler will collect them
+                return client.emitAsync('start', null);
+            })
+            // wait 2 seconds to finish getting messages
+            .delay(2000)
+            .then(() => {
+                // Look for each of the following topic and offsets
+                // to have been consumed.
+                let shouldHave = [
+                    { topic: topicNames[1], offset: 0 },
+                ]
+                assert.equal(messages.length, shouldHave.length, `should have consumed ${shouldHave.length} messages`);
+                assertTopicOffsetsInMessages(messages, shouldHave);
+            })
+            .finally(() => {
+                client.disconnect();
+                done();
+            });
+        });
+    });
 
 });
