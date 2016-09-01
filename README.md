@@ -82,7 +82,6 @@ socket.disconnect();
 ## TODO
 
 - Custom Error types?
-- websocket tests, integration tests.
 - return _kafka topic, partition offset outside of event/message?
 - docker with kafka
 - rdkafka statsd
