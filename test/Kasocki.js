@@ -476,6 +476,9 @@ describe('Kasocki', function() {
             .then((msg) => {
                 assert.equal(msg._kafka.offset, 0, `check kafka offset in ${topicNames[0]}`);
             })
+            .catch((e) => {
+                console.log("huhh?", e);
+            })
             .finally(() => {
                 client.disconnect();
                 done();
