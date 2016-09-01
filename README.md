@@ -84,7 +84,6 @@ socket.disconnect();
 
 - add documentation about one time subscribe/assign
 - Custom Error types?
-- return _kafka topic, partition offset outside of event/message?
 - docker with kafka
 - rdkafka statsd
 - logstash?
