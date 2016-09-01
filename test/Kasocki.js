@@ -67,8 +67,8 @@ function assertTopicOffsetsInMessages(messages, topicOffsets) {
     topicOffsets.forEach((topicOffset) => {
         let foundIt = messages.find((msg) => {
             return (
-                msg._kafka.topic === topicOffset.topic &&
-                msg._kafka.offset === topicOffset.offset
+                msg.meta.topic === topicOffset.topic &&
+                msg.meta.offset === topicOffset.offset
             );
         });
         // assert that messages contained a message
@@ -474,10 +474,7 @@ describe('Kasocki', function() {
                 return client.emitAsync('consume', null)
             })
             .then((msg) => {
-                assert.equal(msg._kafka.offset, 0, `check kafka offset in ${topicNames[0]}`);
-            })
-            .catch((e) => {
-                console.log("huhh?", e);
+                assert.equal(msg.meta.offset, 0, `check kafka offset in ${topicNames[0]}`);
             })
             .finally(() => {
                 client.disconnect();
@@ -497,12 +494,12 @@ describe('Kasocki', function() {
                 return client.emitAsync('consume', null)
             })
             .then((msg) => {
-                assert.equal(msg._kafka.offset, 0, `check kafka offset in ${topicNames[0]}`);
+                assert.equal(msg.meta.offset, 0, `check kafka offset in ${topicNames[0]}`);
                 // consume again
                 return client.emitAsync('consume', null)
             })
             .then((msg) => {
-                assert.equal(msg._kafka.offset, 1, `check kafka offset in ${topicNames[0]}`);
+                assert.equal(msg.meta.offset, 1, `check kafka offset in ${topicNames[0]}`);
             })
             .finally(() => {
                 client.disconnect();

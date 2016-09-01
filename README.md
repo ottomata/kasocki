@@ -79,9 +79,11 @@ socket.emit('start', null, errorCallback);
 socket.disconnect();
 ```
 
+
 ## TODO
 
 - add documentation about one time subscribe/assign
+- Use BlueBird instead of Native promsises for perf and for filtered catch.
 - Custom Error types?
 - return _kafka topic, partition offset outside of event/message?
 - docker with kafka
