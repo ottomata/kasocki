@@ -35,14 +35,12 @@ class TestKasockiServer {
         this.io.on('connection', (socket) => {
             // Kafka broker should be running at localhost:9092.
             // TODO: How to Mock Kafka broker and prep topics and data?
-            this.kasocki = new Kasocki(
-                socket,
-                kafkaConfig,
-                allowedTopics,
-                // TODO; rearrange when kafkaEventHandlers is finalized
-                undefined,
-                this.log
-            );
+            this.kasocki = new Kasocki(socket, {
+                kafkaConfig: kafkaConfig,
+                allowedTopics: allowedTopics,
+                logger: this.log
+                // kafkaEventHandlers: ...
+            });
             this.connectedClients += 1;
 
             socket.on('disconnect', () => {
@@ -460,6 +458,7 @@ describe('Kasocki', function() {
             });
         });
     });
+
 
     // == Test consume ==
 

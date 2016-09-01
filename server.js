@@ -23,7 +23,9 @@ class KasockiServer {
             // You could alternatively pass a socket.io namespace.
             console.log(socket.id + ' connected');
             // Kafka broker should be running at localhost:9092
-            this.kasocki = new Kasocki(socket, {'metadata.broker.list': '10.11.12.13:9092'}, ['test', 'test4', 'test6']);
+            this.kasocki = new Kasocki(socket, {
+                allowedTopics: ['test', 'test4', 'test6']
+            });
         });
     }
 

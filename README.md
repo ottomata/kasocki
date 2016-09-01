@@ -84,10 +84,11 @@ socket.disconnect();
 
 - add documentation about one time subscribe/assign
 - Custom Error types?
+- Filter for array values
+- filter with some other thing?  JSONPath?
 - docker with kafka
 - rdkafka statsd
 - logstash?
-- Filter for array values
 
 
 ## Blizzard Consume Modes
