@@ -24,7 +24,9 @@ io.on('connection', (socket) => {
     // Create a new Kasocki instance bound to the socket.
     // The socket client can then subscribe to topics,
     // specify filters, and start consuming.
-    let kasocki = new Kasocki(socket, kafka_config, bunyan_logger);
+    let kasocki = new Kasocki(socket, {
+        kafkaConfig: {'metadata.broker.list': 'mybroker:9092'}
+    });
 });
 
 server.listen(6927);
@@ -40,26 +42,24 @@ socket.on('message', function(message){
     console.log('Received: ', message);
 });
 
-
 // Log errors if any received from server
-function errorCallback(err) {
+function ackCallback(err, res) {
     if (err) {
         console.log('Got error: ', err);
+    }
+    else {
+        console.log('ACK from server with', res);
     }
 }
 
 
 // Subscribe to some topics
 let topics = [
-     // subscribe to mytopic
-    'mytopic',
-    // and to topics that match a regex.
-    // Note that this format is a feature of librdkafka.
-    // See: https://github.com/edenhill/librdkafka/blob/master/src-cpp/rdkafkacpp.h#L1212
-    '^matchme*'
+     // subscribe to mytopic1 and mytopic2
+    'mytopic1',
+    'mytopic2'
 ]
-socket.emit('subscribe', topics, errorCallback);
-
+socket.emit('subscribe', topics, ackCallback);
 
 // filter for messages based on fields, regexes supported.
 let filters = {
@@ -68,12 +68,10 @@ let filters = {
     // AND message.sub.field must match this regex
     'sub.field': '/^(green|blue).*/'
 }
-socket.emit('filter', filters, errorCallback);
-
+socket.emit('filter', filters, ackCallback);
 
 // start consuming
-socket.emit('start', null, errorCallback);
-
+socket.emit('start', null);
 
 // when finished, disconnect nicely.
 socket.disconnect();
