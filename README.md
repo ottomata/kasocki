@@ -82,8 +82,10 @@ socket.disconnect();
 
 ## TODO
 
+- tests for util.js
+- merge util.js and objectutil.js
+- look into lodash for some fanciness.
 - add documentation about one time subscribe/assign
-- Handle custom errors with filtered promise catch
 - Filter for array values
 - filter with some other thing?  JSONPath?
 - docker with kafka

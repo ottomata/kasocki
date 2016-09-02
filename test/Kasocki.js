@@ -29,6 +29,7 @@ class TestKasockiServer {
 
         this.log = bunyan.createLogger({
             name: 'KasockiTest',
+            // level: 'trace',
             level: 'fatal',
         })
 
@@ -55,7 +56,6 @@ class TestKasockiServer {
     }
 
     close() {
-        this.kasocki.on_disconnect();
         this.server.close();
     }
 }
@@ -92,7 +92,7 @@ assert.topicOffsetsInAssignments = (assignments, topicOffsets) => {
 }
 
 assert.errorNameEqual = (error, errorName) => {
-    assert.equal(error.name, errorName, `should error with ${errorName}`);
+    assert.equal(error.name, errorName, `should error with ${errorName}, got ${error.name} instead.`);
 }
 
 describe('Kasocki', function() {
@@ -100,7 +100,8 @@ describe('Kasocki', function() {
 
     const topicNames = [
         'kasocki_test_01',
-        'kasocki_test_02'
+        'kasocki_test_02',
+        'kasocki_test_03'
     ];
 
     const serverPort            = 6900;
@@ -111,7 +112,6 @@ describe('Kasocki', function() {
     function createClient(port) {
         return P.promisifyAll(require('socket.io-client')(`http://localhost:${port}/`));
     }
-
 
     before(function() {
         server.listen();
@@ -162,16 +162,6 @@ describe('Kasocki', function() {
         });
     });
 
-    // TODO: Not sure how to test this.
-    // it('should connect and then disconnect since configured allowed topic does not exist', function(done) {
-    //     const server = new TestKasockiServer(6092, {}, ['this-topic-does-not-exist']);
-    //     const client = createClient(6092);
-    //     client.on('disconnect', () => {
-    //         console.log("DISCONNECTING");
-    //         done();
-    //     });
-    // });
-
 
     // == Test subscribe to latest
 
@@ -184,7 +174,7 @@ describe('Kasocki', function() {
                 assert.equal(
                     assignments.length,
                     shouldBe.length,
-                    `${shouldBe.length} topic partitions should be assigned`
+                    `${shouldBe.length} topic partitions should be assigned, got ${assignments.length}`
                 );
                 assert.topicOffsetsInAssignments(assignments, shouldBe);
             })
@@ -198,7 +188,7 @@ describe('Kasocki', function() {
     it('should subscribe to multiple topics', function(done) {
         const client = createClient(serverPort);
         client.on('ready', (availableTopics) => {
-            client.emitAsync('subscribe', topicNames)
+            client.emitAsync('subscribe', [topicNames[0], topicNames[1]])
             .then((assignments) => {
                 let shouldBe = [
                     { topic: topicNames[0], partition: 0, offset: -1 },
@@ -207,7 +197,7 @@ describe('Kasocki', function() {
                 assert.equal(
                     assignments.length,
                     shouldBe.length,
-                    `${shouldBe.length} topic partitions should be assigned`
+                    `${shouldBe.length} topic partitions should be assigned, got ${assignments.length}`
                 );
                 assert.topicOffsetsInAssignments(assignments, shouldBe);
             })
@@ -271,7 +261,7 @@ describe('Kasocki', function() {
                 assert.equal(
                     assignments.length,
                     shouldBe.length,
-                    `${shouldBe.length} topic partitions should be assigned`
+                    `${shouldBe.length} topic partitions should be assigned, got ${assignments.length}`
                 );
                 assert.topicOffsetsInAssignments(assignments, shouldBe);
             })
@@ -285,7 +275,7 @@ describe('Kasocki', function() {
     it('should subscribe to a multiple allowed topics', function(done) {
         const client = createClient(restrictiveServerPort);
         client.on('ready', (availableTopics) => {
-            client.emitAsync('subscribe', topicNames)
+            client.emitAsync('subscribe', [topicNames[0], topicNames[1]])
             .then((assignments) => {
                 let shouldBe = [
                     { topic: topicNames[0], partition: 0, offset: -1 },
@@ -294,7 +284,7 @@ describe('Kasocki', function() {
                 assert.equal(
                     assignments.length,
                     shouldBe.length,
-                    `${shouldBe.length} topic partitions should be assigned`
+                    `${shouldBe.length} topic partitions should be assigned, got ${assignments.length}`
                 );
                 assert.topicOffsetsInAssignments(assignments, shouldBe);
             })
@@ -417,7 +407,7 @@ describe('Kasocki', function() {
 
     it('should fail subscribe with offsets to a single not allowed topic', function(done) {
         const client = createClient(restrictiveServerPort);
-        const assignment = [ { topic: 'kasocki_test_03', partition: 0, offset: 0 } ];
+        const assignment = [ { topic: 'kasocki_test_04', partition: 0, offset: 0 } ];
 
         client.on('ready', (availableTopics) => {
             client.emitAsync('subscribe', assignment)
@@ -555,6 +545,50 @@ describe('Kasocki', function() {
                 done();
             });
         });
+    });
+
+    it('should fail consume if not yet subscribed', function(done) {
+        const client = createClient(serverPort);
+
+        client.on('ready', (availableTopics) => {
+            client.emitAsync('consume', null)
+            .then(() => {
+                // should not get here!
+                assert.ok(false, 'unsubscribed consume must error')
+            })
+            .catch((err) => {
+                assert.errorNameEqual(err, 'NotSubscribedError');
+            })
+            .finally(() => {
+                client.disconnect();
+                done();
+            });
+        })
+    });
+
+    it('should not fail consume if a topic has bad data', function(done) {
+        const client = createClient(serverPort);
+        // topicNames[2] has invalid json at offset 0
+        const assignment = [{ topic: topicNames[2], partition: 0, offset: 0 }];
+
+        client.on('ready', (availableTopics) => {
+            client.emitAsync('subscribe', assignment)
+            .then((subscribedTopics) => {
+                // consume
+                return client.emitAsync('consume', null)
+            })
+            .then((msg) => {
+                // The first message in topicNames[2] (kasocki_test_03)
+                // should be skipped because it is not valid JSON,
+                // and the next one should be returned to the client
+                // transparently.
+                assert.equal(msg.meta.offset, 1, `check kafka offset in ${topicNames[0]}`);
+            })
+            .finally(() => {
+                client.disconnect();
+                done();
+            });
+        })
     });
 
 
@@ -898,39 +932,101 @@ describe('Kasocki', function() {
         });
     });
 
-    // TODO :this test is failling??! why?
-    //
-    // it('should fail start if already started', function(done) {
-    //     const client = createClient(serverPort);
-    //
-    //     // Collect messages
-    //     var messages = [];
-    //     client.on('message', (msg) => {
-    //         messages.push(msg);
-    //     });
-    //
-    //     client.on('ready', () => {
-    //         client.emitAsync('subscribe', topicNames[0])
-    //         .then((subscribedTopics) => {
-    //             console.log('subscribed to ', subscribedTopics);
-    //             // start consuming, the on message handler will collect them
-    //             return client.emitAsync('start', null);
-    //         })
-    //         // wait 1 seconds
-    //         // .delay(1000)
-    //         .then(() => {
-    //             // call start again
-    //             console.log('starting again');
-    //             return client.emitAsync('start', null);
-    //         })
-    //         .catch((err) => {
-    //             assert.errorNameEqual(err, 'AlreadyStartedError');
-    //         })
-    //         .finally(() => {
-    //             client.disconnect();
-    //             done();
-    //         });
-    //     });
-    // });
+    it('should fail start if not yet subscribed', function(done) {
+        const client = createClient(serverPort);
 
+        client.on('ready', (availableTopics) => {
+            client.emitAsync('start', null)
+            .then(() => {
+                // should not get here!
+                assert.ok(false, 'unsubscribed consume must error')
+            })
+            .catch((err) => {
+                assert.errorNameEqual(err, 'NotSubscribedError');
+            })
+            .finally(() => {
+                client.disconnect();
+                done();
+            });
+        })
+    });
+
+    it('should fail start if already started', function(done) {
+        const client = createClient(serverPort);
+
+        const assignment = [
+            { topic: topicNames[0], partition: 0, offset: 0 },
+        ];
+
+        client.on('ready', () => {
+            client.emitAsync('subscribe', assignment)
+            .then((subscribedTopics) => {
+                client.emitAsync('start', null);
+            })
+            .then(() => {
+                // call start again
+                client.emitAsync('start', null);
+            })
+            .catch((err) => {
+                assert.errorNameEqual(err, 'AlreadyStartedError');
+            })
+            .finally(() => {
+                client.disconnect();
+                done();
+            });
+        });
+    });
+
+
+    // == Test pause
+
+    it('should handle three messages from two topics with pause and resume', function(done) {
+        const client = createClient(serverPort);
+
+        const assignment = [
+            { topic: topicNames[0], partition: 0, offset: 0 },
+            { topic: topicNames[1], partition: 0, offset: 0 }
+        ];
+
+        // Collect messages
+        var messages = [];
+        client.on('message', (msg) => {
+            messages.push(msg);
+        });
+
+        client.on('ready', () => {
+            client.emitAsync('subscribe', assignment)
+            .then((subscribedTopics) => {
+                // start consuming, the on message handler will collect them
+                client.emitAsync('start', null);
+            })
+            // Pause as soon as possible.
+            .then(() => {
+                client.emitAsync('pause', null);
+            })
+            // wait 1 seconds before resuming
+            .delay(1000)
+            // then resume
+            .then(() => {
+                return client.emitAsync('start', null);
+            })
+            // wait 3 seconds to finish getting messages
+            .delay(3000)
+            .then(() => {
+                // Look for each of the following topic and offsets
+                // to have been consumed.
+                let shouldHave = [
+                    { topic: topicNames[0], offset: 0 },
+                    { topic: topicNames[1], offset: 0 },
+                    { topic: topicNames[1], offset: 1 }
+                ]
+                assert.equal(messages.length, shouldHave.length, `should have consumed ${shouldHave.length} messages`);
+                assert.topicOffsetsInMessages(messages, shouldHave);
+            })
+            .finally(() => {
+                client.disconnect();
+                done();
+            });
+        });
+    });
 });

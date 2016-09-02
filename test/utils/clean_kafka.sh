@@ -26,7 +26,7 @@ dropTopics ( ) {
     	| grep -v 'marked for deletion$'`
     for TOPIC in ${TOPICS}
     do
-      echo "dropping topic ${TOPIC}"
+      echo "Dropping topic ${TOPIC}"
       ${KAFKA_TOPICS_CMD} --zookeeper localhost:2181 --delete --topic ${TOPIC} > /dev/null
     done
   fi
@@ -60,9 +60,12 @@ check 9092 "Kafka"
 dropTopics "kasocki_test_"
 sleep 5
 
+#  TODO: 0 index these topic names and data
 createTopic kasocki_test_01
 createTopic kasocki_test_02
 createTopic kasocki_test_03
+createTopic kasocki_test_04
 
 produceTestData kasocki_test_01 $(dirname $0)/test_data1.json
 produceTestData kasocki_test_02 $(dirname $0)/test_data2.json
+produceTestData kasocki_test_03 $(dirname $0)/test_data3.json

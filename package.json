@@ -5,7 +5,9 @@
   "main": "lib/Kasocki.js",
   "scripts": {
     "start": "./server.js | ./node_modules/bunyan/bin/bunyan",
-    "test": "export UV_THREADPOOL_LIMIT=128 && test/utils/clean_kafka.sh && mocha"
+    "test": "export UV_THREADPOOL_LIMIT=128 && npm cleanup && mocha",
+    "cleanup": "test/utils/clean_kafka.sh",
+    "coverage": "export UV_THREADPOOL_LIMIT=128 && npm run cleanup && istanbul cover _mocha -- -R spec",
   },
   "repository": {
     "type": "git",
