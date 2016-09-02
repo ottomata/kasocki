@@ -83,7 +83,7 @@ socket.disconnect();
 ## TODO
 
 - add documentation about one time subscribe/assign
-- Custom Error types?
+- Handle custom errors with filtered promise catch
 - Filter for array values
 - filter with some other thing?  JSONPath?
 - docker with kafka

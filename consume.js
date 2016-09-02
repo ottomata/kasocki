@@ -155,6 +155,13 @@ var tests = {
         BBPromise.delay(2000).then(emit.bind(null, 'disconnect'));
     },
 
+    startTwice: function() {
+        emit('subscribe', ['test']);
+        BBPromise.delay(2000).then(emit.bind(null, 'start'))
+        .delay(2000).then(emit.bind(null, 'start'))
+        .then(emit.bind(null, 'disconnect'));
+    },
+
     justConsume: function() {
         emit('consume');
         BBPromise.delay(2000).then(emit.bind(null, 'disconnect'));
