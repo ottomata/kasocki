@@ -169,24 +169,6 @@ be done by disconnecting the socket.io client and creating and subscribing
 a new one.
 
 
-## TODO
-
-- tests for util.js
-- merge util.js and objectutil.js
-- pluggable buildMessages function to allow
-  for users to customize the way messages are augmented with kafka meta data.
-  This would allow us to not couple mediawiki/event-schemas meta
-  subobject with non mediawiki specific Kasocki.
-- look into lodash for some fanciness.
-- Filter for array values
-- filter glob wildcards?
-- filter with some other thing?  JSONPath?
-- rdkafka statsd
-- docker with kafka
-- logstash?
-- Make sure all socket event names make sense. (`start`? `pause`? `subscribe` instead of `assign`?)
-- Investigate further how to use Blizzard flowing consume mode properly.
-
 ## Blizzard Consume Modes
 The Blizzard Kafka client that Kasocki uses has
 [several consume APIs](https://github.com/Blizzard/node-rdkafka#kafkakafkaconsumer).
@@ -213,3 +195,38 @@ that want to receive `message` events as fast as possible.  Doing so
 would make `consume` and `start` incompatible modes, and would also
 change the way the `subscribe` event interface currently works.  We may
 do this work later down the road.
+
+
+## Testing
+Mocha tests require a running 0.9+ Kafka broker at `localhost:9092` with
+`delete.topic.enable=true`.  `test/utils/clean_kafka.sh` will prepare
+topics in Kafka for tests.  `npm test` will run this script.
+
+Note that there is a
+[bug in librdkafka/node-rdkafka](https://github.com/edenhill/librdkafka/issues/775)
+that keeps tests from shutting down once done.  This bug also has implications
+for the number of consumers a process can run at once in its lifetime,
+and will have to be resolved somehow before this is put into production.
+
+## TODO
+
+- tests for util.js
+- coveralls?
+- iron out kafkaEventHandlers + docs
+- pluggable buildMessages function to allow
+  for users to customize the way messages are augmented with kafka meta data.
+  This would allow us to not couple mediawiki/event-schemas meta
+  subobject with non mediawiki specific Kasocki.
+- look into lodash for some fanciness.
+- Filter for array values
+- filter glob wildcards?
+- filter with some other thing?  JSONPath?
+- move Kafka test topic and data to fixtures?
+- rdkafka statsd
+- docker with kafka
+- logstash?
+- Make sure all socket event names make sense. (`start`? `pause`? `subscribe` instead of `assign`?)
+- Investigate further how to use Blizzard flowing consume mode properly.
+- Get upstream fix for https://github.com/Blizzard/node-rdkafka/issues/5
+  this will need to be resolved before this can be used in any type of production
+  setting.
