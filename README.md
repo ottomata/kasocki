@@ -210,6 +210,7 @@ and will have to be resolved somehow before this is put into production.
 
 ## TODO
 
+- Feedback to client if their assignment offset does not exist anymore
 - tests for util.js
 - coveralls?
 - iron out kafkaEventHandlers + docs
