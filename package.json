@@ -5,7 +5,7 @@
   "main": "lib/Kasocki.js",
   "scripts": {
     "start": "./server.js | ./node_modules/bunyan/bin/bunyan",
-    "test": "export UV_THREADPOOL_SIZE=128 && npm run cleanup && mocha",
+    "test": "export UV_THREADPOOL_SIZE=128 && npm run coverage && npm run coveralls",
     "cleanup": "test/utils/clean_kafka.sh",
     "coverage": "export UV_THREADPOOL_SIZE=128 && npm run cleanup && istanbul cover _mocha -- -R spec",
     "coveralls": "cat ./coverage/lcov.info | coveralls"
