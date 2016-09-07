@@ -1,5 +1,5 @@
 [![Travis](https://travis-ci.org/ottomata/kasocki.svg?branch=master)](https://travis-ci.org/ottomata/kasocki)
-
+[![Coverage Status](https://coveralls.io/repos/github/ottomata/kasocki/badge.svg?branch=master)](https://coveralls.io/github/ottomata/kasocki?branch=master)
 # Kasocki
 _Under heavy development, still a work in progress._
 
