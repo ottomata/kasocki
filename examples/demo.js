@@ -22,7 +22,7 @@ function createClient(port) {
 
 //  Read the demo to run from argv
 var demoName = process.argv[2];
-var topic = process.argv[3] || 'eqiad.mediawiki.revision-create';
+var topic    = process.argv[3] || 'eqiad.mediawiki.revision-create';
 
 
 //  Create a new client, and run the demo when ready.
@@ -87,7 +87,7 @@ const demos = {
         emit('subscribe', topic)
         .then(() => {
             return emit('filter', {
-                database: 'mediawikiwiki',
+                database:   'mediawikiwiki',
                 page_title: '/^User.*Ottomata$/'
             });
         })
