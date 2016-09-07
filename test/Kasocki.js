@@ -25,7 +25,6 @@ class TestKasockiServer {
         this.port = port;
         this.server = http.createServer();
         this.io = socket_io(this.server);
-        this.connectedClients = 0;
 
         this.log = bunyan.createLogger({
             name: 'KasockiTest',
@@ -42,11 +41,18 @@ class TestKasockiServer {
                 logger: this.log
                 // kafkaEventHandlers: ...
             });
-            this.connectedClients += 1;
 
+            // TODO: This is a total hack.  Calling KafkaConsumer
+            // disconnect can result in hung processes until
+            // messages/consumer connections are GCed.  This
+            // can cause tests to never finish.  By
+            // deleting the kafka consumer instance before
+            // Kasocki handles the socket.io client disconnect event,
+            // Kasocki will not attempt to call kafka consumer disconnec().
+            // See: https://github.com/Blizzard/node-rdkafka/issues/5
             socket.on('disconnect', () => {
-                this.connectedClients -= 1;
-            })
+                delete this.kasocki.kafkaConsumer;
+            });
         });
 
     }
