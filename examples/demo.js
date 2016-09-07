@@ -22,7 +22,7 @@ function createClient(port) {
 
 //  Read the demo to run from argv
 var demoName = process.argv[2];
-var topics = process.argv[3].split(',') || ['eqiad.mediawiki.revision-create'];
+var topic = process.argv[3] || 'eqiad.mediawiki.revision-create';
 
 
 //  Create a new client, and run the demo when ready.
@@ -50,8 +50,9 @@ function emit(socketEvent, arg) {
 
 
 const demos = {
+
     consume_one_message: (client) => {
-        emit('subscribe', topics)
+        emit('subscribe', topic)
         .then(() => {
             return emit('consume', null);
         })
@@ -60,23 +61,21 @@ const demos = {
         });
     },
 
-    stream_for_three_seconds: (client) => {
+
+    stream: (client) => {
         // Register an on message handler to log all received
         // after start is emitted.
         client.on('message', (msg) => {
             console.log(msg);
         });
 
-        emit('subscribe', topics)
+        emit('subscribe', topic)
         .then(() => {
             return emit('start', null);
-        })
-        // consume the stream for 3 seconds then disconnect
-        .delay(3000)
-        .then(() => {
-            client.disconnect();
         });
+
     },
+
 
     stream_with_filter: (client) => {
         // Register an on message handler to log all received
@@ -85,21 +84,18 @@ const demos = {
             console.log(msg);
         });
 
-        emit('subscribe', topics)
-        // Filter for revisions created by bots
+        emit('subscribe', topic)
         .then(() => {
-            return emit('filter', {database: 'eswiki'});
-            // return emit('filter', {'name': 'green'});
+            return emit('filter', {
+                database: 'mediawikiwiki',
+                page_title: '/^User.*Ottomata$/'
+            });
         })
         .then(() => {
             return emit('start', null);
-        })
-        // consume the stream for 3 seconds then disconnect
-        .delay(3000)
-        .then(() => {
-            client.disconnect();
         });
     },
+
 
     stream_starting_from_offset: (client) => {
         // Register an on message handler to log all received
@@ -109,17 +105,14 @@ const demos = {
         });
 
         let assignment = [
-            {topic: 'eqiad.mediawiki.revision-create', partition: 0, offset: 6502717},
-            // {topic: 'test', partition: 0, offset: 1928346},
+            {topic: topic, partition: 0, offset: 6502717},
         ]
         emit('subscribe', assignment)
         .then(() => {
-            return emit('start', null);
+            return emit('filter', {database: 'plwiki'});
         })
-        // consume the stream for 3 seconds then disconnect
-        .delay(3000)
         .then(() => {
-            client.disconnect();
+            return emit('start', null);
         });
     },
 }
