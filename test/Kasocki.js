@@ -31,7 +31,7 @@ class TestKasockiServer {
             name: 'KasockiTest',
             // level: 'trace',
             level: 'fatal',
-        })
+        });
 
         this.io.on('connection', (socket) => {
             // Kafka broker should be running at localhost:9092.
@@ -978,9 +978,9 @@ describe('Kasocki', function() {
     });
 
 
-    // == Test pause
+    // == Test stop
 
-    it('should handle three messages from two topics with pause and resume', function(done) {
+    it('should handle three messages from two topics with stop and resume', function(done) {
         const client = createClient(serverPort);
 
         const assignment = [
@@ -1000,9 +1000,9 @@ describe('Kasocki', function() {
                 // start consuming, the on message handler will collect them
                 client.emitAsync('start', null);
             })
-            // Pause as soon as possible.
+            // Stop as soon as possible.
             .then(() => {
-                client.emitAsync('pause', null);
+                client.emitAsync('stop', null);
             })
             // wait 1 seconds before resuming
             .delay(1000)

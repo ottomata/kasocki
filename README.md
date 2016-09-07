@@ -87,10 +87,10 @@ socket.emit('start', null);
 
 const BBPromise = require('bluebird');
 
-// pause consuming after 2 seconds
+// stop consuming after 2 seconds
 BBPromise.delay(2000)
 .then(() => {
-    socket.emit('pause', null);
+    socket.emit('stop', null);
 })
 // resume consuming after 2 seconds
 .delay(2000)
@@ -210,8 +210,11 @@ and will have to be resolved somehow before this is put into production.
 
 ## TODO
 
+- Add 'error' socketEvent to communicate errors back to client during consume loop.
 - Feedback to client if their assignment offset does not exist anymore
-- tests for util.js
+- tests for utils.js
+- make kafka functions in utils.js work with KafkaConsumer metadata instead of consumer
+  to make testing easier.
 - coveralls?
 - iron out kafkaEventHandlers + docs
 - pluggable buildMessages function to allow
@@ -226,7 +229,7 @@ and will have to be resolved somehow before this is put into production.
 - rdkafka statsd
 - docker with kafka
 - logstash?
-- Make sure all socket event names make sense. (`start`? `pause`? `subscribe` instead of `assign`?)
+- Make sure all socket event names make sense. (`start`? `stop`? `subscribe` instead of `assign`?)
 - Investigate further how to use Blizzard flowing consume mode properly.
 - Get upstream fix for https://github.com/Blizzard/node-rdkafka/issues/5
   this will need to be resolved before this can be used in any type of production

@@ -25,7 +25,7 @@ io.on('connection', (socket) => {
     // You could alternatively pass a socket.io namespace.
     log.info(socket.id + ' connected');
     new Kasocki(socket, {
-        log: log,
+        logger: log,
         kafkaConfig: {
             'metadata.broker.list': brokers
         }

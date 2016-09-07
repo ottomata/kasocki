@@ -38,7 +38,7 @@ function emit(socketEvent, arg) {
     return client.emitAsync(socketEvent, arg)
 
     .then((res) => {
-        log.info({socketEvent: socketEvent}, `${socketEvent} returned via socket.io ACK callback`, res);
+        log.info({socketEvent: socketEvent, result: res}, `${socketEvent} returned via socket.io ACK callback`);
     })
 
     .catch((err) => {
@@ -88,7 +88,7 @@ const demos = {
         emit('subscribe', topics)
         // Filter for revisions created by bots
         .then(() => {
-            return emit('filter', {'performer.user_is_bot': true});
+            return emit('filter', {database: 'eswiki'});
             // return emit('filter', {'name': 'green'});
         })
         .then(() => {
@@ -109,8 +109,8 @@ const demos = {
         });
 
         let assignment = [
-            // {topic: 'eqiad.mediawiki.revision-create', partition: 0, offset: 'earliest'},
-            {topic: 'test', partition: 0, offset: 1928346},
+            {topic: 'eqiad.mediawiki.revision-create', partition: 0, offset: 6502717},
+            // {topic: 'test', partition: 0, offset: 1928346},
         ]
         emit('subscribe', assignment)
         .then(() => {
