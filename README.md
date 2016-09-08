@@ -226,7 +226,6 @@ and will have to be resolved somehow before this is put into production.
 - filter glob wildcards?
 - filter with some other thing?  JSONPath?
 - move Kafka test topic and data to fixtures?
-- rdkafka statsd
 - docker with kafka
 - logstash?
 - Make sure all socket event names make sense. (`start`? `stop`? `subscribe` instead of `assign`?)
@@ -234,3 +233,4 @@ and will have to be resolved somehow before this is put into production.
 - Get upstream fix for https://github.com/Blizzard/node-rdkafka/issues/5
   this will need to be resolved before this can be used in any type of production
   setting.
+- rdkafka statsd: https://phabricator.wikimedia.org/T145099

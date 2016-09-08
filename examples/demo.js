@@ -13,7 +13,9 @@ var log = bunyan.createLogger({
  * Returns Promsified socket.io client connected to a Kasocki socket.io server.
  */
 function createClient(port) {
-    log.info(`Creating new Kasocki client, connecting to localhost:${port}`);
+    log.info(
+        `Creating new Kasocki client, connecting to localhost:${port}`
+    );
     return Promise.promisifyAll(
         require('socket.io-client')(`http://localhost:${port}/`)
     );
