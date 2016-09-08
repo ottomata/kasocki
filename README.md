@@ -215,7 +215,6 @@ and will have to be resolved somehow before this is put into production.
 - tests for utils.js
 - make kafka functions in utils.js work with KafkaConsumer metadata instead of consumer
   to make testing easier.
-- coveralls?
 - iron out kafkaEventHandlers + docs
 - pluggable buildMessages function to allow
   for users to customize the way messages are augmented with kafka meta data.
