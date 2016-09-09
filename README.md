@@ -1,12 +1,6 @@
 [![Travis](https://travis-ci.org/ottomata/kasocki.svg?branch=master)](https://travis-ci.org/ottomata/kasocki)
 [![Coverage Status](https://coveralls.io/repos/github/ottomata/kasocki/badge.svg?branch=master)](https://coveralls.io/github/ottomata/kasocki?branch=master)
 
-# MOVED
-This repo has moved to Wikimedia Diffusion, mirrored in github.com/wikimedia:
-
-- https://phabricator.wikimedia.org/diffusion/WKSK/
-- https://github.com/wikimedia/kasocki (mirror)
-
 # Kasocki
 _Under heavy development, still a work in progress._
 
