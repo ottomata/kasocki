@@ -1,5 +1,12 @@
 [![Travis](https://travis-ci.org/ottomata/kasocki.svg?branch=master)](https://travis-ci.org/ottomata/kasocki)
 [![Coverage Status](https://coveralls.io/repos/github/ottomata/kasocki/badge.svg?branch=master)](https://coveralls.io/github/ottomata/kasocki?branch=master)
+
+# MOVED
+This repo has moved to Wikimedia Diffusion, mirrored in github.com/wikimedia:
+
+- https://phabricator.wikimedia.org/diffusion/WKSK/
+- https://github.com/wikimedia/kasocki (mirror)
+
 # Kasocki
 _Under heavy development, still a work in progress._
 
@@ -118,6 +125,18 @@ let topicAssignment = [
 socket.emit('subscribe', topicAssignment, ackCallback);
 ```
 
+Most socket events will return errors in the ack callback, but
+you can also receive them via an `err` socket event handler.
+This is especially useful for receiving and handling
+errors that might happen during the async streaming consume loop
+that runs after `start` is emitted.
+
+```
+socket.on('err', (e) => {
+    consloe.log('Got error from Kasocki server', e);
+});
+```
+
 
 ## `consume` vs `start`
 
@@ -210,9 +229,9 @@ and will have to be resolved somehow before this is put into production.
 
 ## TODO
 
-- Add 'error' socketEvent to communicate errors back to client during consume loop.
 - Feedback to client if their assignment offset does not exist anymore
 - tests for utils.js
+- standardize use of error, err, or e variable names in callbacks.
 - make kafka functions in utils.js work with KafkaConsumer metadata instead of consumer
   to make testing easier.
 - iron out kafkaEventHandlers + docs

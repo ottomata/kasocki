@@ -471,6 +471,30 @@ describe('Kasocki', function() {
         });
     });
 
+    // == Test error socket event ==
+
+    it('should fail consume if not yet subscribed and emit error event', function(done) {
+        const client = createClient(serverPort);
+
+        client.on('ready', (availableTopics) => {
+            client.on('err', (err) => {
+                assert.errorNameEqual(err, 'NotSubscribedError');
+                client.disconnect();
+                done();
+            });
+
+            // consume without subscribe
+            client.emitAsync('consume', null)
+            .then(() => {
+                // should not get here!
+                assert.ok(false, 'unsubscribed consume must error')
+            })
+            .catch((err) => {
+                // no op, we will expect on error handler to validate error
+            })
+        })
+    });
+
 
     // == Test consume ==
 
@@ -975,6 +999,37 @@ describe('Kasocki', function() {
             })
             .catch((err) => {
                 assert.errorNameEqual(err, 'AlreadyStartedError');
+            })
+            .finally(() => {
+                client.disconnect();
+                done();
+            });
+        });
+    });
+
+    it('should fail start if already started and handle an err socket event', function(done) {
+        const client = createClient(serverPort);
+
+        const assignment = [
+            { topic: topicNames[0], partition: 0, offset: 0 },
+        ];
+
+        client.on('ready', () => {
+            client.on('err', (e) => {
+                assert.errorNameEqual(e, 'AlreadyStartedError');
+            });
+
+            client.emitAsync('subscribe', assignment)
+            .then((subscribedTopics) => {
+                client.emitAsync('start', null);
+            })
+            .then(() => {
+                // call start again
+                client.emitAsync('start', null);
+            })
+            .catch((err) => {
+                // do nothing, we will check that the err socket event
+                // handler gets the error.
             })
             .finally(() => {
                 client.disconnect();
