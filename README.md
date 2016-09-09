@@ -227,16 +227,12 @@ and will have to be resolved somehow before this is put into production.
 - tests for utils.js
 - make kafka functions in utils.js work with KafkaConsumer metadata instead of consumer
   to make testing easier.
-- iron out kafkaEventHandlers + docs
-- look into lodash for some fanciness.
+- tests for kafkaEventHandlers
 - Filter for array values
 - filter glob wildcards?
 - filter with some other thing?  JSONPath?
 - move Kafka test topic and data to fixtures?
 - docker with kafka
-- logstash?
-- Make sure all socket event names make sense. (`start`? `stop`? `subscribe` instead of `assign`?)
-- Investigate further how to use Blizzard flowing consume mode properly.
 - Get upstream fix for https://github.com/Blizzard/node-rdkafka/issues/5
   this will need to be resolved before this can be used in any type of production
   setting.
