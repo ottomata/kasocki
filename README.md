@@ -228,10 +228,6 @@ and will have to be resolved somehow before this is put into production.
 - make kafka functions in utils.js work with KafkaConsumer metadata instead of consumer
   to make testing easier.
 - iron out kafkaEventHandlers + docs
-- pluggable buildMessages function to allow
-  for users to customize the way messages are augmented with kafka meta data.
-  This would allow us to not couple mediawiki/event-schemas meta
-  subobject with non mediawiki specific Kasocki.
 - look into lodash for some fanciness.
 - Filter for array values
 - filter glob wildcards?
