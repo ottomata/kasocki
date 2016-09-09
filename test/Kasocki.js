@@ -97,8 +97,8 @@ assert.topicOffsetsInAssignments = (assignments, topicOffsets) => {
     });
 }
 
-assert.errorNameEqual = (error, errorName) => {
-    assert.equal(error.name, errorName, `should error with ${errorName}, got ${error.name} instead.`);
+assert.errorNameEqual = (e, errorName) => {
+    assert.equal(e.name, errorName, `should error with ${errorName}, got ${e.name} instead.`);
 }
 
 describe('Kasocki', function() {
@@ -218,8 +218,8 @@ describe('Kasocki', function() {
         const client = createClient(serverPort);
         client.on('ready', (availableTopics) => {
             client.emitAsync('subscribe', {'this': 'will fail'})
-            .catch((err) => {
-                assert.errorNameEqual(err, 'InvalidTopicError');
+            .catch((e) => {
+                assert.errorNameEqual(e, 'InvalidTopicError');
             })
             .finally(() => {
                 client.disconnect();
@@ -233,8 +233,8 @@ describe('Kasocki', function() {
         const client = createClient(serverPort);
         client.on('ready', (availableTopics) => {
             client.emitAsync('subscribe', ['non-existent-topic'])
-            .catch((err) => {
-                assert.errorNameEqual(err, 'TopicNotAvailableError');
+            .catch((e) => {
+                assert.errorNameEqual(e, 'TopicNotAvailableError');
             })
             .finally(() => {
                 client.disconnect();
@@ -247,7 +247,7 @@ describe('Kasocki', function() {
         const client = createClient(serverPort);
         client.on('ready', (availableTopics) => {
             client.emitAsync('subscribe', [topicNames[0], 'non-existent-topic'])
-            .catch((err) => {
+            .catch((e) => {
                 // TODO check err type?
                 assert.ok(true, 'should throw an error');
             })
@@ -305,8 +305,8 @@ describe('Kasocki', function() {
         const client = createClient(restrictiveServerPort);
         client.on('ready', (availableTopics) => {
             client.emitAsync('subscribe', ['non-existent-topic'])
-            .catch((err) => {
-                assert.errorNameEqual(err, 'TopicNotAvailableError');
+            .catch((e) => {
+                assert.errorNameEqual(e, 'TopicNotAvailableError');
             })
             .finally(() => {
                 client.disconnect();
@@ -319,7 +319,7 @@ describe('Kasocki', function() {
         const client = createClient(restrictiveServerPort);
         client.on('ready', (availableTopics) => {
             client.emitAsync('subscribe', [topicNames[0], 'non-existent-topic'])
-            .catch((err) => {
+            .catch((e) => {
                 // TODO check err type?
                 assert.ok(true, 'should throw an error');
             })
@@ -339,8 +339,8 @@ describe('Kasocki', function() {
                 // start consuming, the on message handler will collect them
                 return client.emitAsync('subscribe', topicNames[1]);
             })
-            .catch((err) => {
-                assert.errorNameEqual(err, 'AlreadySubscribedError');
+            .catch((e) => {
+                assert.errorNameEqual(e, 'AlreadySubscribedError');
             })
             .finally(() => {
                 client.disconnect();
@@ -400,7 +400,7 @@ describe('Kasocki', function() {
 
         client.on('ready', (availableTopics) => {
             client.emitAsync('subscribe', assignment)
-            .catch((err) => {
+            .catch((e) => {
                 // TODO check err type?
                 assert.ok(true, 'should throw an error');
             })
@@ -417,8 +417,8 @@ describe('Kasocki', function() {
 
         client.on('ready', (availableTopics) => {
             client.emitAsync('subscribe', assignment)
-            .catch((err) => {
-                assert.errorNameEqual(err, 'TopicNotAvailableError');
+            .catch((e) => {
+                assert.errorNameEqual(e, 'TopicNotAvailableError');
             })
             .finally(() => {
                 client.disconnect();
@@ -461,8 +461,8 @@ describe('Kasocki', function() {
 
         client.on('ready', (availableTopics) => {
             client.emitAsync('subscribe', assignment)
-            .catch((err) => {
-                assert.errorNameEqual(err, 'TopicNotAvailableError');
+            .catch((e) => {
+                assert.errorNameEqual(e, 'TopicNotAvailableError');
             })
             .finally(() => {
                 client.disconnect();
@@ -477,8 +477,8 @@ describe('Kasocki', function() {
         const client = createClient(serverPort);
 
         client.on('ready', (availableTopics) => {
-            client.on('err', (err) => {
-                assert.errorNameEqual(err, 'NotSubscribedError');
+            client.on('err', (e) => {
+                assert.errorNameEqual(e, 'NotSubscribedError');
                 client.disconnect();
                 done();
             });
@@ -489,7 +489,7 @@ describe('Kasocki', function() {
                 // should not get here!
                 assert.ok(false, 'unsubscribed consume must error')
             })
-            .catch((err) => {
+            .catch((e) => {
                 // no op, we will expect on error handler to validate error
             })
         })
@@ -586,8 +586,8 @@ describe('Kasocki', function() {
                 // should not get here!
                 assert.ok(false, 'unsubscribed consume must error')
             })
-            .catch((err) => {
-                assert.errorNameEqual(err, 'NotSubscribedError');
+            .catch((e) => {
+                assert.errorNameEqual(e, 'NotSubscribedError');
             })
             .finally(() => {
                 client.disconnect();
@@ -805,8 +805,8 @@ describe('Kasocki', function() {
             .then((subscribedTopics) => {
                 return client.emitAsync('filter', filters)
             })
-            .catch((err) => {
-                assert.errorNameEqual(err, 'InvalidFilterError');
+            .catch((e) => {
+                assert.errorNameEqual(e, 'InvalidFilterError');
             })
             .finally(() => {
                 client.disconnect();
@@ -833,8 +833,8 @@ describe('Kasocki', function() {
             .then((subscribedTopics) => {
                 return client.emitAsync('filter', filters)
             })
-            .catch((err) => {
-                assert.errorNameEqual(err, 'InvalidFilterError');
+            .catch((e) => {
+                assert.errorNameEqual(e, 'InvalidFilterError');
             })
             .finally(() => {
                 client.disconnect();
@@ -861,8 +861,8 @@ describe('Kasocki', function() {
             .then((subscribedTopics) => {
                 return client.emitAsync('filter', filters)
             })
-            .catch((err) => {
-                assert.errorNameEqual(err, 'InvalidFilterError');
+            .catch((e) => {
+                assert.errorNameEqual(e, 'InvalidFilterError');
             })
             .finally(() => {
                 client.disconnect();
@@ -971,8 +971,8 @@ describe('Kasocki', function() {
                 // should not get here!
                 assert.ok(false, 'unsubscribed consume must error')
             })
-            .catch((err) => {
-                assert.errorNameEqual(err, 'NotSubscribedError');
+            .catch((e) => {
+                assert.errorNameEqual(e, 'NotSubscribedError');
             })
             .finally(() => {
                 client.disconnect();
@@ -997,8 +997,8 @@ describe('Kasocki', function() {
                 // call start again
                 client.emitAsync('start', null);
             })
-            .catch((err) => {
-                assert.errorNameEqual(err, 'AlreadyStartedError');
+            .catch((e) => {
+                assert.errorNameEqual(e, 'AlreadyStartedError');
             })
             .finally(() => {
                 client.disconnect();
@@ -1027,7 +1027,7 @@ describe('Kasocki', function() {
                 // call start again
                 client.emitAsync('start', null);
             })
-            .catch((err) => {
+            .catch((e) => {
                 // do nothing, we will check that the err socket event
                 // handler gets the error.
             })

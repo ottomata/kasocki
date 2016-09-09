@@ -225,7 +225,6 @@ and will have to be resolved somehow before this is put into production.
 
 - Feedback to client if their assignment offset does not exist anymore
 - tests for utils.js
-- standardize use of error, err, or e variable names in callbacks.
 - make kafka functions in utils.js work with KafkaConsumer metadata instead of consumer
   to make testing easier.
 - iron out kafkaEventHandlers + docs
