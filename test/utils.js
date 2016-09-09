@@ -8,8 +8,8 @@ var assert = require('assert');
 
 var utils = require('../lib/utils.js');
 
-describe('buildMessageAsync', () => {
-    it('should return an augmented message from a Kafka message', () => {
+describe('deserializeKafkaMessage', () => {
+    it('should return an augmented message from a Kafka message', function(done) {
         let kafkaMessage = {
             message: '{ "first_name": "Dorkus", "last_name": "Berry" }',
             topic: 'test',
@@ -18,13 +18,12 @@ describe('buildMessageAsync', () => {
             key: 'myKey',
         };
 
-        utils.buildMessageAsync(kafkaMessage)
-        .then((msg) => {
-            assert.equal(msg.meta.topic, kafkaMessage.topic, 'built message should have topic');
-            assert.equal(msg.meta.partition, kafkaMessage.partition, 'built message should have partition');
-            assert.equal(msg.meta.offset, kafkaMessage.offset, 'built message should have offset');
-            assert.equal(msg.meta.key, kafkaMessage.key, 'built message should have key');
-        });
+        let msg = utils.deserializeKafkaMessage(kafkaMessage);
+        assert.equal(msg._kafka.topic, kafkaMessage.topic, 'built message should have topic');
+        assert.equal(msg._kafka.partition, kafkaMessage.partition, 'built message should have partition');
+        assert.equal(msg._kafka.offset, kafkaMessage.offset, 'built message should have offset');
+        assert.equal(msg._kafka.key, kafkaMessage.key, 'built message should have key');
+        done();
     });
 });
 

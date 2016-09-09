@@ -21,26 +21,24 @@ const socket_io    = require('socket.io');
  */
 class TestKasockiServer {
 
-    constructor(port, kafkaConfig, allowedTopics) {
+    constructor(port, kasockiOptions) {
         this.port = port;
         this.server = http.createServer();
         this.io = socket_io(this.server);
 
         this.log = bunyan.createLogger({
             name: 'KasockiTest',
-            // level: 'trace',
+            // level: 'debug',
             level: 'fatal',
         });
+
+        kasockiOptions = kasockiOptions || {};
+        kasockiOptions.logger = this.log;
 
         this.io.on('connection', (socket) => {
             // Kafka broker should be running at localhost:9092.
             // TODO: How to Mock Kafka broker and prep topics and data?
-            this.kasocki = new Kasocki(socket, {
-                kafkaConfig: kafkaConfig,
-                allowedTopics: allowedTopics,
-                logger: this.log
-                // kafkaEventHandlers: ...
-            });
+            this.kasocki = new Kasocki(socket, kasockiOptions);
 
             // TODO: This is a total hack.  Calling KafkaConsumer
             // disconnect can result in hung processes until
@@ -71,8 +69,8 @@ assert.topicOffsetsInMessages = (messages, topicOffsets) => {
     topicOffsets.forEach((topicOffset) => {
         let foundIt = messages.find((msg) => {
             return (
-                msg.meta.topic === topicOffset.topic &&
-                msg.meta.offset === topicOffset.offset
+                msg._kafka.topic === topicOffset.topic &&
+                msg._kafka.offset === topicOffset.offset
             );
         });
         // assert that messages contained a message
@@ -112,8 +110,11 @@ describe('Kasocki', function() {
 
     const serverPort            = 6900;
     const server                = new TestKasockiServer(serverPort);
+
     const restrictiveServerPort = 6901;
-    const restrictiveServer     = new TestKasockiServer(restrictiveServerPort, {}, topicNames);
+    const restrictiveServer     = new TestKasockiServer(restrictiveServerPort, {
+        allowedTopics: topicNames
+    });
 
     function createClient(port) {
         return P.promisifyAll(require('socket.io-client')(`http://localhost:${port}/`));
@@ -509,7 +510,7 @@ describe('Kasocki', function() {
                 return client.emitAsync('consume', null)
             })
             .then((msg) => {
-                assert.equal(msg.meta.offset, 0, `check kafka offset in ${topicNames[0]}`);
+                assert.equal(msg._kafka.offset, 0, `check kafka offset in ${topicNames[0]}`);
             })
             .finally(() => {
                 client.disconnect();
@@ -529,12 +530,12 @@ describe('Kasocki', function() {
                 return client.emitAsync('consume', null)
             })
             .then((msg) => {
-                assert.equal(msg.meta.offset, 0, `check kafka offset in ${topicNames[0]}`);
+                assert.equal(msg._kafka.offset, 0, `check kafka offset in ${topicNames[0]}`);
                 // consume again
                 return client.emitAsync('consume', null)
             })
             .then((msg) => {
-                assert.equal(msg.meta.offset, 1, `check kafka offset in ${topicNames[0]}`);
+                assert.equal(msg._kafka.offset, 1, `check kafka offset in ${topicNames[0]}`);
             })
             .finally(() => {
                 client.disconnect();
@@ -612,7 +613,7 @@ describe('Kasocki', function() {
                 // should be skipped because it is not valid JSON,
                 // and the next one should be returned to the client
                 // transparently.
-                assert.equal(msg.meta.offset, 1, `check kafka offset in ${topicNames[0]}`);
+                assert.equal(msg._kafka.offset, 1, `check kafka offset in ${topicNames[0]}`);
             })
             .finally(() => {
                 client.disconnect();
@@ -1090,4 +1091,96 @@ describe('Kasocki', function() {
             });
         });
     });
+
+
+    // == Test custom message deserializer
+
+    it('should take a custom message deserializer and use it', function(done) {
+
+        const shouldBe = {'i am': 'not a good deserializer'}
+
+        // create a custom Kasocki server with a custom message deserializer
+        // for this test.
+        const customDeserializingServerPort = 6092;
+        const customDeserializingServer = new TestKasockiServer(
+            customDeserializingServerPort,
+            {
+                // configure this Kasocki server with a pretty useless
+                // message deserializer function, just for testing this feature.
+                deserializer: function(kafkaMessage) {
+                    return shouldBe;
+                }
+            }
+        );
+        customDeserializingServer.listen();
+
+        const client = createClient(customDeserializingServerPort);
+
+        const assignment = [
+            { topic: topicNames[0], partition: 0, offset: 0 },
+        ];
+
+        client.on('ready', () => {
+            client.emitAsync('subscribe', assignment)
+            .then(() => {
+                client.emitAsync('consume', undefined)
+                .then((msg) => {
+                    assert.deepEqual(msg, shouldBe, 'should custom deserialize message');
+                })
+                .finally(() => {
+                    client.disconnect();
+                    customDeserializingServer.close();
+                    done();
+                })
+            })
+        })
+    });
+
+    it('should not throw error to client for deserialization error', function(done) {
+        // create a custom Kasocki server with a custom message deserializer
+        // for this test.
+        const customDeserializingServerPort = 6093;
+        const customDeserializingServer = new TestKasockiServer(
+            customDeserializingServerPort,
+            {
+                // configure this Kasocki server with a pretty useless
+                // message deserializer function, just for testing this feature.
+                deserializer: function(kafkaMessage) {
+                    // throw an error the first time the message is called.
+                    if (kafkaMessage.offset === 0) {
+                        throw new Error('Client should not see this');
+                    }
+                    // else just return something we can check
+                    else {
+                        return {offset: kafkaMessage.offset};
+                    }
+                }
+            }
+        );
+        customDeserializingServer.listen();
+
+        const client = createClient(customDeserializingServerPort);
+
+        const assignment = [
+            { topic: topicNames[1], partition: 0, offset: 0 },
+        ];
+
+        client.on('ready', () => {
+            client.emitAsync('subscribe', assignment)
+            .then(() => {
+                client.emitAsync('consume', undefined)
+                .then((msg) => {
+                    // offset 0 should have been skipped because of the
+                    // Error thrown when offset === 0 by the deserializer.
+                    assert.deepEqual(msg, {'offset': 1}, 'should skip first message because of DeserializationError');
+                })
+                .finally(() => {
+                    client.disconnect();
+                    customDeserializingServer.close();
+                    done();
+                })
+            })
+        })
+    });
+
 });
